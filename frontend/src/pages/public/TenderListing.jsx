@@ -24,7 +24,7 @@ const TenderListing = () => {
       if (filters.search) params.search = filters.search;
       
       const response = await tenderService.getTenders(params);
-      setTenders(response.data.tenders);
+      setTenders(response.data.data ? response.data.data.tenders : response.data.tenders);
     } catch (error) {
       console.error('Error fetching tenders:', error);
     } finally {

@@ -4,6 +4,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
+    # Pass Authorization header to PHP
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    
     # API routes - handle through api/index.php
     RewriteRule ^api(/.*)?$ api/index.php [L]
     

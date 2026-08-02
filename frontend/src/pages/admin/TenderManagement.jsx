@@ -25,7 +25,7 @@ const TenderManagement = () => {
   const fetchTenders = async () => {
     try {
       const response = await tenderService.getTenders();
-      setTenders(response.data.tenders);
+      setTenders(response.data.data ? response.data.data.tenders : response.data.tenders);
     } catch (error) {
       console.error('Error fetching tenders:', error);
     } finally {
@@ -107,8 +107,7 @@ const TenderManagement = () => {
   };
 
   return (
-    <div className="py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-primary mb-2">Manage Tenders</h1>
@@ -370,7 +369,6 @@ const TenderManagement = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };

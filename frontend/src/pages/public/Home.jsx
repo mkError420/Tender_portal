@@ -13,7 +13,8 @@ const Home = () => {
   const fetchActiveTenders = async () => {
     try {
       const response = await tenderService.getTenders({ status: 'active' });
-      setTenders(response.data.tenders.slice(0, 6));
+      const tenders = response.data.data ? response.data.data.tenders : response.data.tenders;
+      setTenders(tenders.slice(0, 6));
     } catch (error) {
       console.error('Error fetching tenders:', error);
     } finally {

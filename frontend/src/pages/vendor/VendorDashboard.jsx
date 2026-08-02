@@ -15,7 +15,7 @@ const VendorDashboard = () => {
   const fetchBids = async () => {
     try {
       const response = await bidService.getBids();
-      setBids(response.data.bids);
+      setBids(response.data.data ? response.data.data.bids : response.data.bids);
     } catch (error) {
       console.error('Error fetching bids:', error);
     } finally {

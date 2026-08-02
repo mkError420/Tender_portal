@@ -20,13 +20,15 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import TenderManagement from './pages/admin/TenderManagement';
 import BidManagement from './pages/admin/BidManagement';
 
+import AdminLayout from './components/AdminLayout';
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="min-h-screen flex flex-col bg-gray-50">
           <Navbar />
-          <main className="flex-grow">
+          <main className="flex-grow flex flex-col">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
@@ -51,6 +53,7 @@ function App() {
               />
               
               {/* Vendor Routes */}
+              <Route path="/vendor" element={<Navigate to="/vendor/dashboard" replace />} />
               <Route
                 path="/vendor/dashboard"
                 element={
@@ -62,29 +65,18 @@ function App() {
               
               {/* Admin Routes */}
               <Route
-                path="/admin/dashboard"
+                path="/admin"
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminDashboard />
+                    <AdminLayout />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="/admin/tenders"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <TenderManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/bids"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <BidManagement />
-                  </ProtectedRoute>
-                }
-              />
+              >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="tenders" element={<TenderManagement />} />
+                <Route path="bids" element={<BidManagement />} />
+              </Route>
               
               {/* Catch all */}
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -4,6 +4,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
+    # Pass Authorization header to PHP
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    
     # Redirect to index.php if the requested file doesn't exist
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

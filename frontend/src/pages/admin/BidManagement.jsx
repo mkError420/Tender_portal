@@ -17,7 +17,7 @@ const BidManagement = () => {
     try {
       const params = filterTender ? { tender_id: filterTender } : {};
       const response = await bidService.getBids(params);
-      setBids(response.data.bids);
+      setBids(response.data.data ? response.data.data.bids : response.data.bids);
     } catch (error) {
       console.error('Error fetching bids:', error);
     } finally {
@@ -59,8 +59,7 @@ const BidManagement = () => {
   };
 
   return (
-    <div className="py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-primary mb-2">Manage Bids</h1>
           <p className="text-gray-600">Review and respond to vendor submissions</p>
@@ -296,7 +295,6 @@ const BidManagement = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };

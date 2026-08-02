@@ -32,7 +32,7 @@ const Navbar = () => {
             <Link to="/tenders" className="text-gray-300 hover:text-white transition">
               Tenders
             </Link>
-            
+
             {isAuthenticated && isAdmin && (
               <>
                 <Link to="/admin/dashboard" className="text-gray-300 hover:text-white transition">
@@ -40,7 +40,7 @@ const Navbar = () => {
                 </Link>
               </>
             )}
-            
+
             {isAuthenticated && isVendor && (
               <>
                 <Link to="/vendor/dashboard" className="text-gray-300 hover:text-white transition">
@@ -53,9 +53,25 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <span className="text-gray-300 text-sm hidden sm:block">
-                  {user?.name}
-                </span>
+                {isAdmin ? (
+                  <Link
+                    to="/admin/dashboard"
+                    className="bg-primary-light hover:bg-primary text-white font-medium px-3.5 py-1.5 rounded-lg border border-gray-600 transition flex items-center gap-2 text-sm shadow-sm"
+                  >
+                    {user?.name || 'Admin User'}
+                  </Link>
+                ) : isVendor ? (
+                  <Link
+                    to="/vendor/dashboard"
+                    className="bg-primary-light hover:bg-primary text-white font-medium px-3.5 py-1.5 rounded-lg border border-gray-600 transition flex items-center gap-2 text-sm shadow-sm"
+                  >
+                    <span>👤</span> {user?.name || 'Vendor'}
+                  </Link>
+                ) : (
+                  <span className="text-gray-300 text-sm hidden sm:block">
+                    {user?.name}
+                  </span>
+                )}
                 <button
                   onClick={handleLogout}
                   className="bg-accent hover:bg-accent-dark text-white px-4 py-2 rounded-lg transition"

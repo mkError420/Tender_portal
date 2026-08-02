@@ -49,17 +49,28 @@ try {
     ");
     $recentBids = $recentBidsStmt->fetchAll();
 
+    // 5. Recent Tenders Stream
+    $recentTendersStmt = $db->query("
+        SELECT id, title, reference_no, status, created_at, closing_date
+        FROM tenders
+        ORDER BY created_at DESC
+        LIMIT 6
+    ");
+    $recentTenders = $recentTendersStmt->fetchAll();
+
     Response::success("Dashboard metrics fetched", [
         "metrics" => [
             "total_tenders" => (int)$tenderMetrics['total'],
             "active_tenders" => (int)$tenderMetrics['active'],
             "total_bids" => (int)$bidMetrics['total'],
             "pending_bids" => (int)$bidMetrics['pending_review'],
+            "pending_reviews" => (int)$bidMetrics['pending_review'],
             "shortlisted_bids" => (int)$bidMetrics['shortlisted'],
             "accepted_bids" => (int)$bidMetrics['accepted'],
             "total_vendors" => (int)$vendorMetrics['total_vendors']
         ],
-        "recent_bids" => $recentBids
+        "recent_bids" => $recentBids,
+        "recent_tenders" => $recentTenders
     ]);
 
 } catch (Exception $e) {

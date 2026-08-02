@@ -26,7 +26,7 @@ const TenderDetail = () => {
   const fetchTender = async () => {
     try {
       const response = await tenderService.getTender(id);
-      setTender(response.data.tender);
+      setTender(response.data.data ? response.data.data.tender : response.data.tender);
     } catch (error) {
       console.error('Error fetching tender:', error);
     } finally {
