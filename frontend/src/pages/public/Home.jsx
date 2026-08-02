@@ -112,12 +112,11 @@ const Home = () => {
                     </p>
                     <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
                       <span>
-                        <i className="mr-1">📅</i>
                         Closes: {new Date(tender.closing_date).toLocaleDateString()}
                       </span>
                       {tender.estimated_budget && (
                         <span className="font-semibold text-primary">
-                          ${Number(tender.estimated_budget).toLocaleString()}
+                          BDT {Number(tender.estimated_budget).toLocaleString('en-US')}
                         </span>
                       )}
                     </div>

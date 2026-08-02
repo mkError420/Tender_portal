@@ -107,108 +107,116 @@ const TenderManagement = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-        <div className="flex justify-between items-center mb-8">
+    <div className="p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Manage Tenders</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Tender Management</h1>
             <p className="text-gray-600">Create and manage tender opportunities</p>
           </div>
           <button
             onClick={handleCreate}
-            className="bg-accent hover:bg-accent-dark text-white px-6 py-3 rounded-lg transition font-semibold"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm hover:shadow"
           >
-            + Create Tender
+            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create Tender
           </button>
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : tenders.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <div className="text-gray-500 text-lg mb-4">No tenders found.</div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+            <div className="text-6xl mb-4">📋</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Tenders Yet</h3>
+            <p className="text-gray-600 mb-6">Create your first tender to get started.</p>
             <button
               onClick={handleCreate}
-              className="bg-accent hover:bg-accent-dark text-white px-6 py-2 rounded-lg transition"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
             >
+              <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
               Create First Tender
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Title
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Reference
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Category
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Closing Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Bids
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-100">
                   {tenders.map((tender) => (
-                    <tr key={tender.id} className="hover:bg-gray-50">
+                    <tr key={tender.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-primary">{tender.title}</div>
+                        <div className="text-sm font-medium text-gray-900">{tender.title}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{tender.reference_no}</div>
+                        <div className="text-sm text-gray-600">{tender.reference_no}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{tender.category}</div>
+                        <div className="text-sm text-gray-600">{tender.category}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <select
                           value={tender.status}
                           onChange={(e) => handleStatusChange(tender, e.target.value)}
-                          className={`text-xs px-3 py-1 rounded-full border-0 ${getStatusColor(tender.status)}`}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${getStatusColor(tender.status)}`}
                         >
                           <option value="draft">Draft</option>
                           <option value="active">Active</option>
                           <option value="under_review">Under Review</option>
-                          <option value="awarded">Awarded</option>
+                          <option value="awarded">Completed</option>
                           <option value="cancelled">Cancelled</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-600">
                           {new Date(tender.closing_date).toLocaleDateString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-primary">
+                        <div className="text-sm font-semibold text-gray-900">
                           {tender.bid_count || 0}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                         <button
                           onClick={() => handleEdit(tender)}
-                          className="text-accent hover:text-accent-dark"
+                          className="text-blue-600 hover:text-blue-700 transition-colors"
                         >
                           Edit
                         </button>
                         <Link
                           to={`/tenders/${tender.id}`}
-                          className="text-primary hover:text-primary-dark"
+                          className="text-blue-600 hover:text-blue-700 transition-colors"
                         >
                           View
                         </Link>
@@ -292,7 +300,7 @@ const TenderManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Estimated Budget ($)
+                      Estimated Budget (BDT)
                     </label>
                     <input
                       type="number"
@@ -316,7 +324,7 @@ const TenderManagement = () => {
                       <option value="draft">Draft</option>
                       <option value="active">Active</option>
                       <option value="under_review">Under Review</option>
-                      <option value="awarded">Awarded</option>
+                      <option value="awarded">Completed</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
                   </div>

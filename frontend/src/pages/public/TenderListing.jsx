@@ -176,7 +176,7 @@ const TenderListing = () => {
                           </span>
                           {tender.estimated_budget && (
                             <span className="font-semibold text-primary">
-                              Budget: ${Number(tender.estimated_budget).toLocaleString()}
+                              Budget: BDT {Number(tender.estimated_budget).toLocaleString('en-US')}
                             </span>
                           )}
                           <span>

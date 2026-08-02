@@ -19,6 +19,8 @@ import VendorDashboard from './pages/vendor/VendorDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import TenderManagement from './pages/admin/TenderManagement';
 import BidManagement from './pages/admin/BidManagement';
+import VendorManagement from './pages/admin/VendorManagement';
+import AdminManagement from './pages/admin/AdminManagement';
 
 import AdminLayout from './components/AdminLayout';
 
@@ -76,6 +78,8 @@ function App() {
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="tenders" element={<TenderManagement />} />
                 <Route path="bids" element={<BidManagement />} />
+                <Route path="vendors" element={<VendorManagement />} />
+                <Route path="admins" element={<AdminManagement />} />
               </Route>
               
               {/* Catch all */}

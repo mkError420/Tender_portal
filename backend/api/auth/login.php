@@ -20,7 +20,7 @@ $database = new Database();
 $conn = $database->getConnection();
 
 try {
-    $query = "SELECT id, name, email, password_hash, role, phone, company_name 
+    $query = "SELECT id, name, email, password_hash, role, status, phone, company_name 
               FROM users WHERE email = :email";
     
     $stmt = $conn->prepare($query);
@@ -33,6 +33,11 @@ try {
         sendJsonResponse(['error' => 'Invalid credentials'], 401);
     }
     
+    // Check if vendor account is active
+    if ($user['role'] === 'vendor' && $user['status'] !== 'active') {
+        sendJsonResponse(['error' => 'Your vendor account is not active. Please contact admin.'], 403);
+    }
+    
     // Remove password hash from response
     unset($user['password_hash']);
     
@@ -41,6 +46,7 @@ try {
         'user_id' => $user['id'],
         'email' => $user['email'],
         'role' => $user['role'],
+        'status' => $user['status'],
         'exp' => time() + (24 * 60 * 60) // 24 hours
     ];
     

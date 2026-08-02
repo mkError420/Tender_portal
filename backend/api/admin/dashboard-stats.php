@@ -26,11 +26,27 @@ try {
     $bidStatsStmt->execute();
     $bidStats = $bidStatsStmt->fetchAll();
     
-    // Get total vendors
-    $vendorCountQuery = "SELECT COUNT(*) as count FROM users WHERE role = 'vendor'";
-    $vendorCountStmt = $conn->prepare($vendorCountQuery);
-    $vendorCountStmt->execute();
-    $vendorCount = $vendorCountStmt->fetch()['count'];
+    // Get total vendors by status (check if status column exists)
+    $columnCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'status'");
+    if ($columnCheck->rowCount() > 0) {
+        $vendorStatsQuery = "SELECT status, COUNT(*) as count FROM users WHERE role = 'vendor' GROUP BY status";
+        $vendorStatsStmt = $conn->prepare($vendorStatsQuery);
+        $vendorStatsStmt->execute();
+        $vendorStats = $vendorStatsStmt->fetchAll();
+    } else {
+        $vendorStats = [];
+        $vendorCountQuery = "SELECT COUNT(*) as count FROM users WHERE role = 'vendor'";
+        $vendorCountStmt = $conn->prepare($vendorCountQuery);
+        $vendorCountStmt->execute();
+        $count = $vendorCountStmt->fetch()['count'];
+        $vendorStats[] = ['status' => 'active', 'count' => $count];
+    }
+    
+    // Get total admins
+    $adminCountQuery = "SELECT COUNT(*) as count FROM users WHERE role = 'admin'";
+    $adminCountStmt = $conn->prepare($adminCountQuery);
+    $adminCountStmt->execute();
+    $adminCount = $adminCountStmt->fetch()['count'];
     
     // Get recent activity (last 10 tenders and bids)
     $recentTendersQuery = "SELECT id, title, reference_no, status, created_at 
@@ -60,14 +76,22 @@ try {
         $bidStatsByStatus[$stat['status']] = $stat['count'];
     }
     
+    $vendorStatsByStatus = [];
+    foreach ($vendorStats as $stat) {
+        $vendorStatsByStatus[$stat['status']] = $stat['count'];
+    }
+    
     sendJsonResponse([
         'tender_stats' => $tenderStatsByStatus,
         'bid_stats' => $bidStatsByStatus,
-        'total_vendors' => $vendorCount,
+        'vendor_stats' => $vendorStatsByStatus,
+        'total_vendors' => array_sum($vendorStatsByStatus),
         'total_tenders' => array_sum($tenderStatsByStatus),
         'total_bids' => array_sum($bidStatsByStatus),
+        'total_admins' => $adminCount,
         'active_tenders' => $tenderStatsByStatus['active'] ?? 0,
         'pending_reviews' => $bidStatsByStatus['submitted'] ?? 0,
+        'pending_vendors' => $vendorStatsByStatus['pending'] ?? 0,
         'recent_tenders' => $recentTenders,
         'recent_bids' => $recentBids
     ]);

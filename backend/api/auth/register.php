@@ -36,23 +36,29 @@ try {
     // Hash password
     $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
     
-    // Insert user
-    $query = "INSERT INTO users (name, email, password_hash, role, phone, company_name, trade_license_no, address)
-              VALUES (:name, :email, :password_hash, :role, :phone, :company_name, :trade_license_no, :address)";
+    // Insert user with default status based on role
+    $status = ($data['role'] === 'vendor') ? 'pending' : 'active';
+    $query = "INSERT INTO users (name, email, password_hash, role, status, phone, company_name, trade_license_no, address)
+              VALUES (:name, :email, :password_hash, :role, :status, :phone, :company_name, :trade_license_no, :address)";
 
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':name', $data['name']);
     $stmt->bindParam(':email', $data['email']);
     $stmt->bindParam(':password_hash', $passwordHash);
     $stmt->bindParam(':role', $data['role']);
+    $stmt->bindParam(':status', $status);
     $stmt->bindParam(':phone', $data['phone'] ?? null);
     $stmt->bindParam(':company_name', $data['company_name'] ?? null);
     $stmt->bindParam(':trade_license_no', $data['trade_license_no'] ?? null);
     $stmt->bindParam(':address', $data['address'] ?? null);
     
     if ($stmt->execute()) {
+        $message = ($data['role'] === 'vendor') 
+            ? 'Vendor registration successful! Your account is pending admin approval.'
+            : 'User registered successfully';
+        
         sendJsonResponse([
-            'message' => 'User registered successfully',
+            'message' => $message,
             'user_id' => $conn->lastInsertId()
         ], 201);
     } else {

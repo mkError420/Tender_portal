@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'vendor') NOT NULL DEFAULT 'vendor',
+    status ENUM('pending', 'active', 'suspended') DEFAULT 'pending',
     phone VARCHAR(20),
     company_name VARCHAR(255),
     trade_license_no VARCHAR(100),
@@ -19,7 +20,8 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
-    INDEX idx_role (role)
+    INDEX idx_role (role),
+    INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tenders table
@@ -83,3 +85,4 @@ CREATE TABLE IF NOT EXISTS tender_documents (
 INSERT INTO users (name, email, password_hash, role, phone, company_name) 
 VALUES ('Admin User', 'admin@rangpurgroup.com', '$2y$10$placeholder_run_reset_admin_password_php_on_server', 'admin', '+8801700000000', 'Rangpur Group')
 ON DUPLICATE KEY UPDATE email=email;
+

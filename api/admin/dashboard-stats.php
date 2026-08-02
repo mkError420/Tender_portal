@@ -32,9 +32,26 @@ try {
     ");
     $bidMetrics = $bidsCountStmt->fetch();
 
-    // 3. Vendors Count
-    $vendorsCountStmt = $db->query("SELECT COUNT(*) as total_vendors FROM users WHERE role = 'vendor'");
+    // 3. Vendors Count with status breakdown (check if status column exists)
+    $columnCheck = $db->query("SHOW COLUMNS FROM users LIKE 'status'");
+    if ($columnCheck->rowCount() > 0) {
+        $vendorsCountStmt = $db->query("
+            SELECT 
+                COUNT(*) as total_vendors,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_vendors,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_vendors,
+                SUM(CASE WHEN status = 'suspended' THEN 1 ELSE 0 END) as suspended_vendors
+            FROM users 
+            WHERE role = 'vendor'
+        ");
+    } else {
+        $vendorsCountStmt = $db->query("SELECT COUNT(*) as total_vendors, 0 as pending_vendors, COUNT(*) as active_vendors, 0 as suspended_vendors FROM users WHERE role = 'vendor'");
+    }
     $vendorMetrics = $vendorsCountStmt->fetch();
+
+    // 4. Admins Count
+    $adminsCountStmt = $db->query("SELECT COUNT(*) as total_admins FROM users WHERE role = 'admin'");
+    $adminMetrics = $adminsCountStmt->fetch();
 
     // 4. Recent Bids Activity Stream
     $recentBidsStmt = $db->query("
@@ -67,7 +84,11 @@ try {
             "pending_reviews" => (int)$bidMetrics['pending_review'],
             "shortlisted_bids" => (int)$bidMetrics['shortlisted'],
             "accepted_bids" => (int)$bidMetrics['accepted'],
-            "total_vendors" => (int)$vendorMetrics['total_vendors']
+            "total_vendors" => (int)$vendorMetrics['total_vendors'],
+            "pending_vendors" => (int)$vendorMetrics['pending_vendors'],
+            "active_vendors" => (int)$vendorMetrics['active_vendors'],
+            "suspended_vendors" => (int)$vendorMetrics['suspended_vendors'],
+            "total_admins" => (int)$adminMetrics['total_admins']
         ],
         "recent_bids" => $recentBids,
         "recent_tenders" => $recentTenders

@@ -43,8 +43,8 @@ const Register = () => {
 
     try {
       const { confirmPassword, ...registerData } = formData;
-      await register(registerData);
-      alert('Registration successful! Please login with your credentials.');
+      const response = await register(registerData);
+      alert(response.data?.message || 'Registration successful! Please login with your credentials.');
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');

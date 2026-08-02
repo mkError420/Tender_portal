@@ -163,7 +163,7 @@ const TenderDetail = () => {
                 <div className="bg-primary-light p-4 rounded-lg mb-6">
                   <div className="text-sm text-gray-300 mb-1">Estimated Budget</div>
                   <div className="text-2xl font-bold text-gold">
-                    ${Number(tender.estimated_budget).toLocaleString()}
+                    BDT {Number(tender.estimated_budget).toLocaleString('en-US')}
                   </div>
                 </div>
               )}
@@ -262,7 +262,7 @@ const TenderDetail = () => {
                 <form onSubmit={handleBidSubmit}>
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bid Amount ($)
+                      Bid Amount (BDT)
                     </label>
                     <input
                       type="number"

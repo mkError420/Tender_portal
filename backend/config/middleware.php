@@ -38,6 +38,13 @@ function requireAdmin() {
 
 // Vendor only middleware
 function requireVendor() {
-    return requireRole(['vendor']);
+    $user = requireRole(['vendor']);
+    
+    // Check if vendor account is active
+    if (isset($user['status']) && $user['status'] !== 'active') {
+        sendJsonResponse(['error' => 'Vendor account is not active'], 403);
+    }
+    
+    return $user;
 }
 ?>

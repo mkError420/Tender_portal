@@ -24,7 +24,15 @@ if (empty($email) || empty($password)) {
 
 $db = (new Database())->getConnection();
 
-$stmt = $db->prepare("SELECT id, name, email, password_hash, role, company_name, phone FROM users WHERE email = :email LIMIT 1");
+// Check if status column exists
+$columnCheck = $db->query("SHOW COLUMNS FROM users LIKE 'status'");
+$hasStatusColumn = $columnCheck->rowCount() > 0;
+
+if ($hasStatusColumn) {
+    $stmt = $db->prepare("SELECT id, name, email, password_hash, role, status, company_name, phone FROM users WHERE email = :email LIMIT 1");
+} else {
+    $stmt = $db->prepare("SELECT id, name, email, password_hash, role, company_name, phone FROM users WHERE email = :email LIMIT 1");
+}
 $stmt->execute([':email' => $email]);
 $user = $stmt->fetch();
 
@@ -32,11 +40,17 @@ if (!$user || !password_verify($password, $user['password_hash'])) {
     Response::error("Invalid email or password.", 401);
 }
 
+// Check if vendor account is active (if status column exists)
+if ($hasStatusColumn && $user['role'] === 'vendor' && $user['status'] !== 'active') {
+    Response::error("Your vendor account is not active. Please contact admin for approval.", 403);
+}
+
 $payload = [
     'id' => (int)$user['id'],
     'name' => $user['name'],
     'email' => $user['email'],
     'role' => $user['role'],
+    'status' => $hasStatusColumn ? ($user['status'] ?? 'active') : 'active',
     'company_name' => $user['company_name']
 ];
 

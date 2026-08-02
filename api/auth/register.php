@@ -50,21 +50,47 @@ if ($stmt->fetch()) {
 $password_hash = password_hash($password, PASSWORD_BCRYPT);
 
 try {
-    $insertStmt = $db->prepare("
-        INSERT INTO users (name, email, password_hash, role, phone, company_name, trade_license_no, address)
-        VALUES (:name, :email, :password_hash, :role, :phone, :company_name, :trade_license_no, :address)
-    ");
+    // Set default status based on role
+    $status = ($role === 'vendor') ? 'pending' : 'active';
+    
+    // Check if status column exists
+    $columnCheck = $db->query("SHOW COLUMNS FROM users LIKE 'status'");
+    $hasStatusColumn = $columnCheck->rowCount() > 0;
+    
+    if ($hasStatusColumn) {
+        $insertStmt = $db->prepare("
+            INSERT INTO users (name, email, password_hash, role, status, phone, company_name, trade_license_no, address)
+            VALUES (:name, :email, :password_hash, :role, :status, :phone, :company_name, :trade_license_no, :address)
+        ");
 
-    $insertStmt->execute([
-        ':name' => $name,
-        ':email' => $email,
-        ':password_hash' => $password_hash,
-        ':role' => $role,
-        ':phone' => $phone,
-        ':company_name' => $company_name,
-        ':trade_license_no' => $trade_license_no,
-        ':address' => $address
-    ]);
+        $insertStmt->execute([
+            ':name' => $name,
+            ':email' => $email,
+            ':password_hash' => $password_hash,
+            ':role' => $role,
+            ':status' => $status,
+            ':phone' => $phone,
+            ':company_name' => $company_name,
+            ':trade_license_no' => $trade_license_no,
+            ':address' => $address
+        ]);
+    } else {
+        $insertStmt = $db->prepare("
+            INSERT INTO users (name, email, password_hash, role, phone, company_name, trade_license_no, address)
+            VALUES (:name, :email, :password_hash, :role, :phone, :company_name, :trade_license_no, :address)
+        ");
+
+        $insertStmt->execute([
+            ':name' => $name,
+            ':email' => $email,
+            ':password_hash' => $password_hash,
+            ':role' => $role,
+            ':phone' => $phone,
+            ':company_name' => $company_name,
+            ':trade_license_no' => $trade_license_no,
+            ':address' => $address
+        ]);
+    }
 
     $userId = $db->lastInsertId();
 
@@ -78,7 +104,11 @@ try {
     ];
     $token = JWT::encode($payload);
 
-    Response::success("Registration successful", [
+    $message = ($role === 'vendor') 
+        ? "Vendor registration successful! Your account is pending admin approval." 
+        : "Registration successful";
+
+    Response::success($message, [
         "token" => $token,
         "user" => $payload
     ], 201);
