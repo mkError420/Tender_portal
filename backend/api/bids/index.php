@@ -40,6 +40,17 @@ try {
         $stmt->execute();
         $bids = $stmt->fetchAll();
         
+        // Convert relative attachment URLs to absolute URLs
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        $baseUrl = $protocol . '://' . $host;
+        
+        foreach ($bids as &$bid) {
+            if ($bid['attachment_url'] && !preg_match('/^https?:\/\//', $bid['attachment_url'])) {
+                $bid['attachment_url'] = $baseUrl . '/' . ltrim($bid['attachment_url'], '/');
+            }
+        }
+        
     } else {
         // Vendor - only their own bids
         $query = "SELECT b.*, t.title as tender_title, t.reference_no, t.status as tender_status,
@@ -63,6 +74,17 @@ try {
         }
         $stmt->execute();
         $bids = $stmt->fetchAll();
+        
+        // Convert relative attachment URLs to absolute URLs
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        $baseUrl = $protocol . '://' . $host;
+        
+        foreach ($bids as &$bid) {
+            if ($bid['attachment_url'] && !preg_match('/^https?:\/\//', $bid['attachment_url'])) {
+                $bid['attachment_url'] = $baseUrl . '/' . ltrim($bid['attachment_url'], '/');
+            }
+        }
     }
     
     sendJsonResponse(['bids' => $bids]);

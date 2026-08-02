@@ -45,6 +45,30 @@ $sql = "
     JOIN users u ON b.vendor_id = u.id
 ";
 
+try {
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $bids = $stmt->fetchAll();
+
+    // Convert relative attachment URLs to absolute URLs
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $baseUrl = $protocol . '://' . $host;
+    
+    foreach ($bids as &$bid) {
+        if ($bid['attachment_url'] && !preg_match('/^https?:\/\//', $bid['attachment_url'])) {
+            $bid['attachment_url'] = $baseUrl . '/' . ltrim($bid['attachment_url'], '/');
+        }
+    }
+
+    Response::success("Bids fetched successfully", [
+        "count" => count($bids),
+        "bids" => $bids
+    ]);
+} catch (Exception $e) {
+    Response::error("Database Error: " . $e->getMessage(), 500);
+}
+
 if (!empty($whereClauses)) {
     $sql .= " WHERE " . implode(" AND ", $whereClauses);
 }

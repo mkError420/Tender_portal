@@ -19,6 +19,7 @@ const BidManagement = () => {
       const response = await bidService.getBids(params);
       const fetchedBids = response.data.data ? response.data.data.bids : response.data.bids;
       
+      // Backend now returns full URLs, just sort by bid amount
       const sortedBids = fetchedBids.sort((a, b) => {
         const amountA = parseFloat(a.bid_amount) || 0;
         const amountB = parseFloat(b.bid_amount) || 0;
@@ -188,7 +189,7 @@ const BidManagement = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                         <button
                           onClick={() => handleViewDetails(bid)}
-                          className="text-blue-600 hover:text-blue-700 transition-colors"
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                         >
                           View Details
                         </button>
@@ -197,7 +198,7 @@ const BidManagement = () => {
                             href={bid.attachment_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-700 transition-colors"
+                            className="inline-block px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
                           >
                             View Attachment
                           </a>
