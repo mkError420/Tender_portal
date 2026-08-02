@@ -21,10 +21,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $requestUri = $_SERVER['REQUEST_URI'];
 $scriptName = $_SERVER['SCRIPT_NAME'];
 
+// Debug logging
+error_log("Request URI: " . $requestUri);
+error_log("Script Name: " . $scriptName);
+
 // Remove script name from request URI to get the path
 $path = str_replace(dirname($scriptName), '', $requestUri);
 $path = str_replace('/index.php', '', $path);
+$path = str_replace('/api', '', $path); // Remove /api prefix if present
 $path = trim($path, '/');
+
+error_log("Final path: " . $path);
 
 // If path is empty, return API info
 if (empty($path)) {

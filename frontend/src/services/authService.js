@@ -9,7 +9,16 @@ export const authService = {
   },
   getCurrentUser: () => {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+    if (!user || user === 'undefined' || user === 'null') {
+      return null;
+    }
+    try {
+      return JSON.parse(user);
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+      localStorage.removeItem('user');
+      return null;
+    }
   },
   isAuthenticated: () => !!localStorage.getItem('token'),
 };

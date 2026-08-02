@@ -17,13 +17,6 @@
 # Set default character encoding
 AddDefaultCharset UTF-8
 
-# Security headers
-<IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set X-XSS-Protection "1; mode=block"
-</IfModule>
-
 # Disable directory browsing
 Options -Indexes
 

@@ -2,114 +2,87 @@
 
 ## Issue Analysis
 
-The login issue is likely caused by missing API routing configuration. The site cannot login because:
-1. No API index.php router exists to handle API requests
-2. No .htaccess files to properly route requests
-3. API endpoints may not be accessible
+The login issue is caused by HTTP 302 redirects on API endpoints. The site cannot login because:
+1. Hosting provider is redirecting API requests instead of processing them
+2. API endpoints return 302 "Found" responses instead of JSON
+3. Frontend cannot receive proper API responses for authentication
 
-## Files Created to Fix the Issue
+## Files Modified to Fix the Issue
 
-I have created the following files to fix the login issue:
+The following files were modified to fix the 302 redirect issue:
 
-### 1. API Router (`api/index.php`)
-- **Purpose**: Main entry point for all API requests
-- **Location**: `api/index.php`
-- **Function**: Routes API requests to appropriate endpoint files
+### 1. Root .htaccess (`.htaccess`)
+- **Purpose**: Prevent hosting redirects for API routes
+- **Location**: `.htaccess` (root directory)
+- **Changes**: Added rules to prevent API redirects and disable automatic redirects
 
 ### 2. API .htaccess (`api/.htaccess`)
-- **Purpose**: Configure API directory routing
+- **Purpose**: Configure API directory routing without redirects
 - **Location**: `api/.htaccess`
-- **Function**: Enables URL rewriting and protects config files
+- **Changes**: Added rules to prevent redirects for existing PHP files
 
-### 3. Frontend .htaccess (`frontend/.htaccess`)
-- **Purpose**: Configure React Router routing
-- **Location**: `frontend/.htaccess`
-- **Function**: Enables client-side routing for React app
+### 3. Frontend Service Files
+- **Purpose**: Route API calls through index.php to bypass redirects
+- **Files Modified**:
+  - `frontend/src/services/authService.js`
+  - `frontend/src/services/tenderService.js`
+  - `frontend/src/services/bidService.js`
+  - `frontend/src/services/adminService.js`
+- **Changes**: All API calls now use `/index.php/` prefix to route through the API router
 
-### 4. Root .htaccess (`.htaccess`)
-- **Purpose**: Configure site-wide routing
-- **Location**: `.htaccess` (root directory)
-- **Function**: Routes API requests to /api/ and frontend requests to index.html
-
-### 5. API Test Script (`test-api.php`)
-- **Purpose**: Test API endpoints without frontend
-- **Location**: `test-api.php`
-- **Function**: Tests login API and connectivity
-
-### 6. Admin User Check Script (`check-admin-user.php`)
-- **Purpose**: Verify admin user exists in database
-- **Location**: `check-admin-user.php`
-- **Function**: Checks and creates admin user if needed
+### 4. New Test Script (`test-direct-api.php`)
+- **Purpose**: Test direct API access to diagnose redirect issues
+- **Location**: `test-direct-api.php`
+- **Function**: Tests both direct file access and routed access
 
 ## Updated Deployment Steps
 
-### Step 1: Upload New Files to cPanel
+### Step 1: Upload Modified Files to cPanel
 
-Upload these newly created files to your hosting:
+Upload these modified files to your hosting:
 
-1. **API Router**: Upload `api/index.php` to `/htdocs/api/`
-2. **API .htaccess**: Upload `api/.htaccess` to `/htdocs/api/`
-3. **Frontend .htaccess**: Upload `frontend/.htaccess` to `/htdocs/`
-4. **Root .htaccess**: Upload `.htaccess` to `/htdocs/`
-5. **Test Scripts**: Upload `test-api.php` and `check-admin-user.php` to `/htdocs/`
+1. **Root .htaccess**: Upload `.htaccess` to `/htdocs/` (replaces existing)
+2. **API .htaccess**: Upload `api/.htaccess` to `/htdocs/api/` (replaces existing)
+3. **Frontend Build**: Rebuild and upload the frontend with modified service files
+4. **New Test Script**: Upload `test-direct-api.php` to `/htdocs/`
 
-### Step 2: Upload API Directory Structure
+### Step 2: Rebuild Frontend
 
-Ensure your API directory structure looks like this:
+Since the API service files were modified, you need to rebuild the frontend:
 
-```
-htdocs/
-├── .htaccess                    (NEW - root .htaccess)
-├── index.html                   (from frontend/dist)
-├── assets/                      (from frontend/dist)
-├── api/
-│   ├── .htaccess                (NEW - api .htaccess)
-│   ├── index.php                (NEW - api router)
-│   ├── config/
-│   │   ├── Cors.php
-│   │   └── Database.php
-│   ├── helpers/
-│   │   ├── JWT.php
-│   │   └── Response.php
-│   ├── middleware/
-│   │   └── AuthMiddleware.php
-│   ├── auth/
-│   │   ├── login.php
-│   │   └── register.php
-│   ├── tenders/
-│   │   ├── index.php
-│   │   ├── show.php
-│   │   ├── create.php
-│   │   └── update.php
-│   ├── bids/
-│   │   ├── submit.php
-│   │   └── update-status.php
-│   └── admin/
-│       └── dashboard-stats.php
-└── uploads/                     (create this directory)
-```
+1. Navigate to the frontend directory
+2. Run `npm run build` to create a new production build
+3. Upload the contents of `frontend/dist/` to `/htdocs/`
 
-### Step 3: Verify Database
+### Step 3: Verify API Routing
 
-1. Access `https://rcmctender.free.je/check-admin-user.php` in your browser
-2. This will check if the admin user exists and create it if needed
-3. **Default Admin Credentials**:
-   - Email: `admin@rangpurgroup.com`
-   - Password: `admin123`
+Test the new routing approach:
 
-### Step 4: Test API Endpoints
+1. Access `https://rcmctender.free.je/test-direct-api.php` in your browser
+2. This will test both direct file access and routed access
+3. If successful, you should see proper JSON responses instead of 302 redirects
 
-1. Access `https://rcmctender.free.je/test-api.php` in your browser
-2. This will test the login API and show the response
-3. If successful, you should see a successful login response with a token
-
-### Step 5: Test Frontend Login
+### Step 4: Test Frontend Login
 
 1. Access `https://rcmctender.free.je/login` in your browser
 2. Try to login with:
    - Email: `admin@rangpurgroup.com`
    - Password: `admin123`
 3. If successful, you should be redirected to the admin dashboard
+
+## How the Fix Works
+
+### The Problem
+Your hosting provider was returning HTTP 302 redirects for API requests instead of processing them. This prevented the frontend from receiving JSON responses needed for authentication.
+
+### The Solution
+1. **Modified .htaccess files**: Added rules to prevent automatic redirects for API routes
+2. **Updated API calls**: Changed all frontend API calls to route through `/index.php/` to ensure they go through the API router
+3. **Direct file access**: The new routing ensures API requests are processed by PHP instead of being redirected
+
+### Technical Details
+- **Old approach**: `/api/auth/login.php` → 302 redirect → failure
+- **New approach**: `/api/index.php/auth/login.php` → processed by API router → success
 
 ## Troubleshooting
 
@@ -138,6 +111,20 @@ htdocs/
 - Access phpMyAdmin in cPanel
 - Verify the database `if0_42423300_rcmc_tender` exists
 - Verify all tables were created (users, tenders, bids, tender_documents)
+
+### Issue: Password verification fails
+
+**Solution 1**: Reset admin password
+- Run `https://rcmctender.free.je/reset-admin-password.php`
+- This will reset the admin password to 'admin123'
+- Try logging in again with the default credentials
+
+**Solution 2**: Manually update password in phpMyAdmin
+- Access phpMyAdmin in cPanel
+- Go to the `users` table
+- Find the admin user (email: admin@rangpurgroup.com)
+- Generate a new password hash using: `password_hash('admin123', PASSWORD_DEFAULT)`
+- Update the `password_hash` field with the new hash
 
 ### Issue: 404 errors on API endpoints
 
@@ -172,6 +159,7 @@ If your hosting provider doesn't support .htaccess or mod_rewrite, you can:
 2. **Remove test scripts** after deployment:
    - Delete `test-api.php`
    - Delete `check-admin-user.php`
+   - Delete `reset-admin-password.php`
    - Delete `test-db-connection.php`
 3. **Protect the uploads directory** - prevent PHP execution in uploads folder
 4. **Update JWT secret key** in production:

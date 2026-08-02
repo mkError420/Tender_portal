@@ -15,15 +15,3 @@ AddDefaultCharset UTF-8
 
 # Disable directory browsing
 Options -Indexes
-
-# Protect configuration files
-<FilesMatch "\.(php|ini|conf|config)$">
-    Order Allow,Deny
-    Deny from all
-</FilesMatch>
-
-# Allow access to specific config files only for internal use
-<FilesMatch "^(Database|Cors)\.php$">
-    Order Allow,Deny
-    Allow from all
-</FilesMatch>

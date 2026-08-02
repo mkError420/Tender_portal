@@ -1,0 +1,15 @@
+# API Directory .htaccess - Alternative Version
+# This version allows direct PHP file access without routing
+
+<IfModule mod_rewrite.c>
+    RewriteEngine Off
+</IfModule>
+
+# Set default character encoding
+AddDefaultCharset UTF-8
+
+# Disable directory browsing
+Options -Indexes
+
+# Enable PHP execution
+AddHandler application/x-httpd-php .php
