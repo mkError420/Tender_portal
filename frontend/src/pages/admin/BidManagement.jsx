@@ -1,26 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { bidService } from '../../services/bidService';
+import { API_BASE_ORIGIN } from '../../services/api';
 
 const BidManagement = () => {
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterTender, setFilterTender] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedBid, setSelectedBid] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
+  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState('');
+  const [attachmentPreviewTitle, setAttachmentPreviewTitle] = useState('Attachment Preview');
 
   useEffect(() => {
     fetchBids();
-  }, [filterTender]);
+  }, []);
 
   const fetchBids = async () => {
     try {
-      const params = filterTender ? { tender_id: filterTender } : {};
-      const response = await bidService.getBids(params);
-      const fetchedBids = response.data.data ? response.data.data.bids : response.data.bids;
-      
-      // Backend now returns full URLs, just sort by bid amount
-      const sortedBids = fetchedBids.sort((a, b) => {
+      const response = await bidService.getBids();
+      let fetchedBids = [];
+
+      if (Array.isArray(response.data?.data?.bids)) {
+        fetchedBids = response.data.data.bids;
+      } else if (Array.isArray(response.data?.bids)) {
+        fetchedBids = response.data.bids;
+      } else if (Array.isArray(response.data)) {
+        fetchedBids = response.data;
+      }
+
+      const sortedBids = fetchedBids.slice().sort((a, b) => {
         const amountA = parseFloat(a.bid_amount) || 0;
         const amountB = parseFloat(b.bid_amount) || 0;
         return amountB - amountA;
@@ -33,6 +42,15 @@ const BidManagement = () => {
       setLoading(false);
     }
   };
+
+  const filteredBids = bids.filter((bid) => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      bid.vendor_name?.toLowerCase().includes(query) ||
+      bid.tender_title?.toLowerCase().includes(query)
+    );
+  });
 
   const handleStatusUpdate = async (bidId, newStatus) => {
     try {
@@ -52,6 +70,21 @@ const BidManagement = () => {
     setShowDetailModal(true);
   };
 
+  const getAttachmentPreviewType = (url) => {
+    const extensionMatch = url?.split('?')[0].match(/\.([^.\/]+)$/);
+    const extension = extensionMatch ? extensionMatch[1].toLowerCase() : '';
+    if (extension === 'pdf') return 'pdf';
+    return 'other';
+  };
+
+  const handlePreviewAttachment = (url, title = 'Attachment Preview') => {
+    const normalizedUrl = normalizeAttachmentUrl(url);
+    if (!normalizedUrl) return;
+    setAttachmentPreviewUrl(normalizedUrl);
+    setAttachmentPreviewTitle(title);
+    setShowAttachmentPreview(true);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'submitted':
@@ -67,6 +100,35 @@ const BidManagement = () => {
     }
   };
 
+  const normalizeAttachmentUrl = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) return null;
+
+    try {
+      if (/^https?:\/\//i.test(trimmedUrl)) {
+        return trimmedUrl;
+      }
+      if (trimmedUrl.startsWith('//')) {
+        return `${window.location.protocol}${trimmedUrl}`;
+      }
+      return new URL(trimmedUrl, `${API_BASE_ORIGIN}/`).toString();
+    } catch (e) {
+      console.warn('Unable to normalize attachment URL:', url, e);
+      return null;
+    }
+  };
+
+  const getAttachmentHref = (url) => {
+    const normalizedUrl = normalizeAttachmentUrl(url);
+    return normalizedUrl || '#';
+  };
+
+  const handleCloseAttachmentPreview = () => {
+    setShowAttachmentPreview(false);
+    setAttachmentPreviewUrl('');
+  };
+
   return (
     <div className="p-6 lg:p-8">
         <div className="mb-8">
@@ -78,21 +140,21 @@ const BidManagement = () => {
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Tender ID
+                Search by Vendor or Tender
               </label>
               <input
                 type="text"
-                value={filterTender}
-                onChange={(e) => setFilterTender(e.target.value)}
-                placeholder="Enter tender ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search vendor name or tender title..."
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
               />
             </div>
             <button
-              onClick={() => setFilterTender('')}
+              onClick={() => setSearchTerm('')}
               className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
-              Clear Filter
+              Clear Search
             </button>
           </div>
         </div>
@@ -101,7 +163,7 @@ const BidManagement = () => {
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : bids.length === 0 ? (
+        ) : filteredBids.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
             <div className="text-6xl mb-4">💰</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Bids Found</h3>
@@ -137,7 +199,7 @@ const BidManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {bids.map((bid, index) => (
+                  {filteredBids.map((bid, index) => (
                     <tr key={bid.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -194,14 +256,13 @@ const BidManagement = () => {
                           View Details
                         </button>
                         {bid.attachment_url && (
-                          <a
-                            href={bid.attachment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => handlePreviewAttachment(bid.attachment_url, `Attachment for ${bid.vendor_name || 'bid'}`)}
                             className="inline-block px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
                           >
                             View Attachment
-                          </a>
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -266,15 +327,14 @@ const BidManagement = () => {
                 {selectedBid.attachment_url && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Attachment</div>
-                    <a
-                      href={selectedBid.attachment_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => handlePreviewAttachment(selectedBid.attachment_url, `Attachment for ${selectedBid.vendor_name || 'bid'}`)}
                       className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium"
                     >
                       <span>📄</span>
                       View Document
-                    </a>
+                    </button>
                   </div>
                 )}
 
@@ -324,6 +384,49 @@ const BidManagement = () => {
                 >
                   Close
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAttachmentPreview && attachmentPreviewUrl && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{attachmentPreviewTitle}</h3>
+                  <p className="text-sm text-gray-500">Previewing uploaded attachment</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseAttachmentPreview}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="bg-gray-50 p-4 h-[80vh] overflow-auto">
+                {getAttachmentPreviewType(attachmentPreviewUrl) === 'pdf' ? (
+                  <iframe
+                    src={attachmentPreviewUrl}
+                    title={attachmentPreviewTitle}
+                    className="w-full h-full border rounded-xl"
+                  />
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center text-gray-700">
+                    <p className="mb-4">This attachment type cannot be previewed in the browser.</p>
+                    <a
+                      href={attachmentPreviewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                      Open attachment in new tab
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           </div>

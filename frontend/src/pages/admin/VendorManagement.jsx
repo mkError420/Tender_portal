@@ -51,6 +51,27 @@ const VendorManagement = () => {
     }
   };
 
+  const handleDeleteVendor = async (vendor) => {
+    const confirmed = window.confirm(
+      `Delete vendor ${vendor.name || vendor.email}? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await adminService.deleteVendor(vendor.id);
+      alert('Vendor deleted successfully.');
+      fetchVendors();
+      if (selectedVendor?.id === vendor.id) {
+        setShowModal(false);
+        setSelectedVendor(null);
+      }
+    } catch (error) {
+      console.error('Error deleting vendor:', error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error deleting vendor. Please try again.';
+      alert(errorMsg);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
@@ -144,12 +165,18 @@ const VendorManagement = () => {
                         {new Date(vendor.created_at).toLocaleDateString()}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 flex gap-2">
                       <button
                         onClick={() => handleViewDetails(vendor)}
                         className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
                       >
                         View Details
+                      </button>
+                      <button
+                        onClick={() => handleDeleteVendor(vendor)}
+                        className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -217,7 +244,13 @@ const VendorManagement = () => {
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end">
+            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                onClick={() => handleDeleteVendor(selectedVendor)}
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Delete Vendor
+              </button>
               <button
                 onClick={() => setShowModal(false)}
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
