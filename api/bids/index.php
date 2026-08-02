@@ -45,6 +45,12 @@ $sql = "
     JOIN users u ON b.vendor_id = u.id
 ";
 
+if (!empty($whereClauses)) {
+    $sql .= " WHERE " . implode(" AND ", $whereClauses);
+}
+
+$sql .= " ORDER BY b.submitted_at DESC";
+
 try {
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -56,29 +62,17 @@ try {
     $baseUrl = $protocol . '://' . $host;
     
     foreach ($bids as &$bid) {
-        if ($bid['attachment_url'] && !preg_match('/^https?:\/\//', $bid['attachment_url'])) {
-            $bid['attachment_url'] = $baseUrl . '/' . ltrim($bid['attachment_url'], '/');
+        if ($bid['attachment_url']) {
+            $decoded = json_decode($bid['attachment_url'], true);
+            if (is_array($decoded)) {
+                $bid['attachment_url'] = array_map(function ($url) use ($baseUrl) {
+                    return preg_match('/^https?:\/\//', $url) ? $url : $baseUrl . '/' . ltrim($url, '/');
+                }, $decoded);
+            } elseif (!preg_match('/^https?:\/\//', $bid['attachment_url'])) {
+                $bid['attachment_url'] = $baseUrl . '/' . ltrim($bid['attachment_url'], '/');
+            }
         }
     }
-
-    Response::success("Bids fetched successfully", [
-        "count" => count($bids),
-        "bids" => $bids
-    ]);
-} catch (Exception $e) {
-    Response::error("Database Error: " . $e->getMessage(), 500);
-}
-
-if (!empty($whereClauses)) {
-    $sql .= " WHERE " . implode(" AND ", $whereClauses);
-}
-
-$sql .= " ORDER BY b.submitted_at DESC";
-
-try {
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    $bids = $stmt->fetchAll();
 
     Response::success("Bids fetched successfully", [
         "count" => count($bids),

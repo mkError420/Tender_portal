@@ -8,11 +8,11 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
-    { name: 'Tenders', path: '/admin/tenders', icon: '📋' },
-    { name: 'Bids', path: '/admin/bids', icon: '💰' },
-    { name: 'Vendors', path: '/admin/vendors', icon: '👥' },
-    { name: 'Admins', path: '/admin/admins', icon: '👔' },
+    { name: 'Dashboard', path: '/admin/dashboard' },
+    { name: 'Tenders', path: '/admin/tenders' },
+    { name: 'Bids', path: '/admin/bids' },
+    { name: 'Vendors', path: '/admin/vendors' },
+    { name: 'Admins', path: '/admin/admins' },
   ];
 
   const handleLogout = () => {

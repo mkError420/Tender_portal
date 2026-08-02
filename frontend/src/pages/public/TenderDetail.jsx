@@ -16,7 +16,7 @@ const TenderDetail = () => {
     bid_amount: '',
     proposal_summary: '',
   });
-  const [bidFile, setBidFile] = useState(null);
+  const [bidFiles, setBidFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -26,7 +26,8 @@ const TenderDetail = () => {
   const fetchTender = async () => {
     try {
       const response = await tenderService.getTender(id);
-      setTender(response.data.data ? response.data.data.tender : response.data.tender);
+      const fetchedTender = response.data.data ? response.data.data.tender : response.data.tender;
+      setTender(fetchedTender);
     } catch (error) {
       console.error('Error fetching tender:', error);
     } finally {
@@ -47,15 +48,18 @@ const TenderDetail = () => {
       formData.append('tender_id', id);
       formData.append('bid_amount', bidForm.bid_amount);
       formData.append('proposal_summary', bidForm.proposal_summary);
-      if (bidFile) {
-        formData.append('attachment', bidFile);
+      if (bidFiles && bidFiles.length > 0) {
+        bidFiles.forEach((file) => {
+          formData.append('attachments[]', file);
+        });
       }
 
       await bidService.submitBid(formData);
       alert('Bid submitted successfully!');
       setShowBidForm(false);
       setBidForm({ bid_amount: '', proposal_summary: '' });
-      setBidFile(null);
+      setBidFiles([]);
+      setTender((prevTender) => prevTender ? { ...prevTender, has_bid: true } : prevTender);
     } catch (error) {
       console.error('Error submitting bid:', error);
       alert('Error submitting bid. Please try again.');
@@ -77,6 +81,8 @@ const TenderDetail = () => {
     if (days > 0) return `${days} day${days > 1 ? 's' : ''} remaining`;
     return `${hours} hour${hours > 1 ? 's' : ''} remaining`;
   };
+
+  const hasSubmittedBid = tender?.has_bid;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -222,7 +228,11 @@ const TenderDetail = () => {
               {tender.status === 'active' && !isClosed && (
                 <div className="mt-6">
                   {isAuthenticated && isVendor ? (
-                    !showBidForm ? (
+                    hasSubmittedBid ? (
+                      <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                        You already submitted a bid for this tender. It is no longer available for you to bid again.
+                      </div>
+                    ) : !showBidForm ? (
                       <button
                         onClick={() => setShowBidForm(true)}
                         className="w-full bg-gold hover:bg-gold-dark text-primary-dark font-semibold py-3 rounded-lg transition"
@@ -256,7 +266,7 @@ const TenderDetail = () => {
             </div>
 
             {/* Bid Form */}
-            {showBidForm && (
+            {showBidForm && !hasSubmittedBid && (
               <div className="bg-white rounded-lg shadow-md p-6 mt-6">
                 <h3 className="text-lg font-semibold text-primary mb-4">Submit Your Bid</h3>
                 <form onSubmit={handleBidSubmit}>
@@ -291,14 +301,21 @@ const TenderDetail = () => {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Attachment (PDF, DOC, DOCX, ZIP)
+                      Attachments (PDF, DOC, DOCX, ZIP) - multiple files allowed
                     </label>
                     <input
                       type="file"
+                      name="attachments[]"
                       accept=".pdf,.doc,.docx,.zip"
-                      onChange={(e) => setBidFile(e.target.files[0])}
+                      multiple
+                      onChange={(e) => setBidFiles(Array.from(e.target.files))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                     />
+                    {bidFiles.length > 0 && (
+                      <div className="mt-2 text-sm text-gray-600">
+                        Selected files: {bidFiles.map((file) => file.name).join(', ')}
+                      </div>
+                    )}
                   </div>
 
                   <button

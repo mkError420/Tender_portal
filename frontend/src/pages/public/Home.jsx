@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
 
 const Home = () => {
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTender, setSelectedTender] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     fetchActiveTenders();
@@ -20,6 +23,30 @@ const Home = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const navigate = useNavigate();
+
+  const handleOpenTenderDetails = async (id) => {
+    setShowDetailModal(true);
+    setDetailLoading(true);
+
+    try {
+      const response = await tenderService.getTender(id);
+      const fetchedTender = response.data.data ? response.data.data.tender : response.data.tender;
+      setSelectedTender(fetchedTender);
+    } catch (error) {
+      console.error('Error fetching tender details:', error);
+      alert('Unable to load tender details. Please try again.');
+      setShowDetailModal(false);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedTender(null);
   };
 
   return (
@@ -120,12 +147,13 @@ const Home = () => {
                         </span>
                       )}
                     </div>
-                    <Link
-                      to={`/tenders/${tender.id}`}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenTenderDetails(tender.id)}
                       className="block w-full bg-primary hover:bg-primary-dark text-white text-center py-2 rounded-lg transition"
                     >
                       View Details
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -142,6 +170,113 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {showDetailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-primary">
+                  Tender Details
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Review the full details for this tender.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseDetailModal}
+                className="rounded-full bg-gray-100 p-2 text-gray-600 hover:bg-gray-200"
+              >
+                ×
+              </button>
+            </div>
+            <div className="max-h-[65vh] overflow-y-auto px-6 py-6">
+              {detailLoading ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                </div>
+              ) : selectedTender ? (
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm font-semibold uppercase tracking-wide text-accent">
+                        {selectedTender.category}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {selectedTender.reference_no}
+                      </span>
+                    </div>
+                    <h4 className="text-3xl font-bold text-primary">
+                      {selectedTender.title}
+                    </h4>
+                    <p className="text-gray-600 whitespace-pre-line">
+                      {selectedTender.description}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-2xl bg-slate-100 border border-slate-200 p-5">
+                      <h5 className="text-lg font-semibold text-slate-900 mb-3">Key Dates</h5>
+                      <p className="text-slate-700">Open Date: {new Date(selectedTender.opening_date).toLocaleDateString()}</p>
+                      <p className="text-slate-700">Close Date: {new Date(selectedTender.closing_date).toLocaleDateString()}</p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-100 border border-slate-200 p-5">
+                      <h5 className="text-lg font-semibold text-slate-900 mb-3">Budget & Location</h5>
+                      {selectedTender.estimated_budget && (
+                        <p className="text-slate-700">Estimated Budget: BDT {Number(selectedTender.estimated_budget).toLocaleString('en-US')}</p>
+                      )}
+                      {selectedTender.location && (
+                        <p className="text-slate-700">Location: {selectedTender.location}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {selectedTender.documents && selectedTender.documents.length > 0 && (
+                    <div className="rounded-2xl bg-gray-50 p-5">
+                      <h5 className="text-lg font-semibold text-primary mb-3">Attachments</h5>
+                      <ul className="space-y-2">
+                        {selectedTender.documents.map((document, index) => (
+                          <li key={`${document}-${index}`}>
+                            <a
+                              href={document}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-accent hover:text-accent-dark underline"
+                            >
+                              Document {index + 1}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <span className="text-sm text-gray-500">
+                      View more details or submit your bid from the tender listing page.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleCloseDetailModal();
+                        navigate(`/tenders/${selectedTender.id}`);
+                      }}
+                      className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark transition"
+                    >
+                      Open Tender Page
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  Tender details unavailable.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* About Section */}
       <section className="bg-primary text-white py-16">

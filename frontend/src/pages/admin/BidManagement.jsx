@@ -326,15 +326,31 @@ const BidManagement = () => {
 
                 {selectedBid.attachment_url && (
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Attachment</div>
-                    <button
-                      type="button"
-                      onClick={() => handlePreviewAttachment(selectedBid.attachment_url, `Attachment for ${selectedBid.vendor_name || 'bid'}`)}
-                      className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium"
-                    >
-                      <span>📄</span>
-                      View Document
-                    </button>
+                    <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Attachments</div>
+                    {Array.isArray(selectedBid.attachment_url) ? (
+                      <div className="space-y-2">
+                        {selectedBid.attachment_url.map((url, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handlePreviewAttachment(url, `Attachment ${idx + 1} for ${selectedBid.vendor_name || 'bid'}`)}
+                            className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium"
+                          >
+                            <span>📄</span>
+                            View Document {idx + 1}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handlePreviewAttachment(selectedBid.attachment_url, `Attachment for ${selectedBid.vendor_name || 'bid'}`)}
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium"
+                      >
+                        <span>📄</span>
+                        View Document
+                      </button>
+                    )}
                   </div>
                 )}
 

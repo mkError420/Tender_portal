@@ -61,51 +61,60 @@ if ($existingBidStmt->fetch()) {
 }
 
 // 3. Handle Proposal Document File Upload (Safe Handling)
-$attachment_url = null;
+$attachment_urls = [];
 
-if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
-    $fileTmpPath = $_FILES['attachment']['tmp_name'];
-    $fileName = $_FILES['attachment']['name'];
-    $fileSize = $_FILES['attachment']['size'];
-    $fileType = $_FILES['attachment']['type'];
-    $fileNameCmps = explode(".", $fileName);
+$allowedExtensions = ['pdf', 'docx', 'doc', 'zip'];
+$allowedMimeTypes = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'application/zip',
+    'application/x-zip-compressed'
+];
+
+$uploadFileDir = __DIR__ . '/../../uploads/proposals/';
+if (!is_dir($uploadFileDir)) {
+    mkdir($uploadFileDir, 0755, true);
+}
+
+$processFile = function ($fileTmpPath, $fileName, $fileSize, $fileType) use ($allowedExtensions, $allowedMimeTypes, $uploadFileDir, &$attachment_urls) {
+    $fileNameCmps = explode('.', $fileName);
     $fileExtension = strtolower(end($fileNameCmps));
-
-    // Allowed Extensions & MIME types
-    $allowedExtensions = ['pdf', 'docx', 'doc', 'zip'];
-    $allowedMimeTypes = [
-        'application/pdf',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/msword',
-        'application/zip',
-        'application/x-zip-compressed'
-    ];
 
     if (!in_array($fileExtension, $allowedExtensions)) {
         Response::error("Invalid file format. Allowed extensions: PDF, DOCX, DOC, ZIP.", 400);
     }
 
-    // Max file size 10MB
     if ($fileSize > 10 * 1024 * 1024) {
         Response::error("File size exceeds 10MB maximum limit.", 400);
     }
 
-    // Directory creation
-    $uploadFileDir = __DIR__ . '/../../uploads/proposals/';
-    if (!is_dir($uploadFileDir)) {
-        mkdir($uploadFileDir, 0755, true);
-    }
-
-    // Sanitize file name
-    $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+    $newFileName = md5(time() . $fileName . random_bytes(6)) . '.' . $fileExtension;
     $dest_path = $uploadFileDir . $newFileName;
 
-    if (move_uploaded_file($fileTmpPath, $dest_path)) {
-        $attachment_url = 'uploads/proposals/' . $newFileName;
-    } else {
+    if (!move_uploaded_file($fileTmpPath, $dest_path)) {
         Response::error("Failed to save uploaded attachment on server.", 500);
     }
+
+    $attachment_urls[] = 'uploads/proposals/' . $newFileName;
+};
+
+if (isset($_FILES['attachments'])) {
+    $files = $_FILES['attachments'];
+    $fileCount = is_array($files['name']) ? count($files['name']) : 0;
+
+    for ($i = 0; $i < $fileCount; $i++) {
+        if ($files['error'][$i] === UPLOAD_ERR_OK) {
+            $processFile($files['tmp_name'][$i], $files['name'][$i], $files['size'][$i], $files['type'][$i]);
+        } elseif ($files['error'][$i] !== UPLOAD_ERR_NO_FILE) {
+            Response::error("One or more attachments failed to upload.", 400);
+        }
+    }
+} elseif (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+    $processFile($_FILES['attachment']['tmp_name'], $_FILES['attachment']['name'], $_FILES['attachment']['size'], $_FILES['attachment']['type']);
 }
+
+$attachment_url = !empty($attachment_urls) ? json_encode($attachment_urls) : null;
 
 try {
     $stmt = $db->prepare("
