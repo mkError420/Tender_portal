@@ -1,0 +1,82 @@
+-- Rangpur Group Tender Management Portal Database Schema
+-- MySQL Database Script
+
+-- Database: if0_42423300_rcmc_tender (Production)
+-- Note: Database is already created on InfinityFree hosting
+USE if0_42423300_rcmc_tender;
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'vendor') NOT NULL DEFAULT 'vendor',
+    phone VARCHAR(20),
+    company_name VARCHAR(255),
+    trade_license_no VARCHAR(100),
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_role (role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tenders table
+CREATE TABLE IF NOT EXISTS tenders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(500) NOT NULL,
+    reference_no VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    estimated_budget DECIMAL(15, 2),
+    publish_date DATE NOT NULL,
+    closing_date DATE NOT NULL,
+    status ENUM('draft', 'active', 'under_review', 'awarded', 'cancelled') NOT NULL DEFAULT 'draft',
+    created_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_status (status),
+    INDEX idx_category (category),
+    INDEX idx_closing_date (closing_date),
+    INDEX idx_reference_no (reference_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Bids table
+CREATE TABLE IF NOT EXISTS bids (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tender_id INT NOT NULL,
+    vendor_id INT NOT NULL,
+    bid_amount DECIMAL(15, 2) NOT NULL,
+    proposal_summary TEXT,
+    attachment_url VARCHAR(500),
+    status ENUM('submitted', 'shortlisted', 'accepted', 'rejected') NOT NULL DEFAULT 'submitted',
+    admin_feedback TEXT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (tender_id) REFERENCES tenders(id) ON DELETE CASCADE,
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_tender_id (tender_id),
+    INDEX idx_vendor_id (vendor_id),
+    INDEX idx_status (status),
+    UNIQUE KEY unique_bid (tender_id, vendor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tender documents table
+CREATE TABLE IF NOT EXISTS tender_documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tender_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_url VARCHAR(500) NOT NULL,
+    file_size BIGINT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tender_id) REFERENCES tenders(id) ON DELETE CASCADE,
+    INDEX idx_tender_id (tender_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Insert default admin user (password: admin123)
+-- Hash generated using password_hash('admin123', PASSWORD_DEFAULT)
+INSERT INTO users (name, email, password_hash, role, phone, company_name) 
+VALUES ('Admin User', 'admin@rangpurgroup.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', '+8801700000000', 'Rangpur Group')
+ON DUPLICATE KEY UPDATE email=email;

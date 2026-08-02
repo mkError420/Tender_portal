@@ -1,0 +1,29 @@
+# API Directory .htaccess
+# Rangpur Group Tender Management Portal
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect to index.php if the requested file doesn't exist
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Set default character encoding
+AddDefaultCharset UTF-8
+
+# Disable directory browsing
+Options -Indexes
+
+# Protect configuration files
+<FilesMatch "\.(php|ini|conf|config)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Allow access to specific config files only for internal use
+<FilesMatch "^(Database|Cors)\.php$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
