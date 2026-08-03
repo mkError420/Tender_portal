@@ -68,6 +68,21 @@ const TenderDetail = () => {
     }
   };
 
+  const handleBidFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setBidFiles(prevFiles => [...prevFiles, ...selectedFiles]);
+  };
+
+  const handleShowBidForm = () => {
+    setBidForm({ bid_amount: '', proposal_summary: '' });
+    setBidFiles([]);
+    setShowBidForm(true);
+  };
+
+  const handleRemoveBidFile = (index) => {
+    setBidFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+  };
+
   const getTimeRemaining = (closingDate) => {
     const now = new Date();
     const closing = new Date(closingDate);
@@ -191,7 +206,6 @@ const TenderDetail = () => {
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
                       >
-                        <span className="text-2xl">📄</span>
                         <div>
                           <div className="font-medium text-primary">{doc.file_name}</div>
                           <div className="text-sm text-gray-500">
@@ -234,14 +248,18 @@ const TenderDetail = () => {
                       </div>
                     ) : !showBidForm ? (
                       <button
-                        onClick={() => setShowBidForm(true)}
+                        onClick={handleShowBidForm}
                         className="w-full bg-gold hover:bg-gold-dark text-primary-dark font-semibold py-3 rounded-lg transition"
                       >
                         Submit Proposal
                       </button>
                     ) : (
                       <button
-                        onClick={() => setShowBidForm(false)}
+                        onClick={() => {
+                          setShowBidForm(false);
+                          setBidForm({ bid_amount: '', proposal_summary: '' });
+                          setBidFiles([]);
+                        }}
                         className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition"
                       >
                         Cancel
@@ -308,12 +326,29 @@ const TenderDetail = () => {
                       name="attachments[]"
                       accept=".pdf,.doc,.docx,.zip"
                       multiple
-                      onChange={(e) => setBidFiles(Array.from(e.target.files))}
+                      onChange={handleBidFileChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                     />
+                    <p className="text-xs text-gray-500 mt-1">You can upload multiple files at once</p>
+                    
                     {bidFiles.length > 0 && (
-                      <div className="mt-2 text-sm text-gray-600">
-                        Selected files: {bidFiles.map((file) => file.name).join(', ')}
+                      <div className="mt-4 space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
+                        {bidFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                            <div className="flex items-center">
+                              <span className="text-sm text-gray-900">{file.name}</span>
+                              <span className="text-xs text-gray-500 ml-2">({(file.size / 1024).toFixed(2)} KB)</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBidFile(index)}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

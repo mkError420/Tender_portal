@@ -9,8 +9,11 @@ const BidManagement = () => {
   const [selectedBid, setSelectedBid] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
+  const [showAttachmentsList, setShowAttachmentsList] = useState(false);
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState('');
   const [attachmentPreviewTitle, setAttachmentPreviewTitle] = useState('Attachment Preview');
+  const [deletingBid, setDeletingBid] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchBids();
@@ -43,7 +46,7 @@ const BidManagement = () => {
     }
   };
 
-  const filteredBids = bids.filter((bid) => {
+  const filteredBids = (bids || []).filter((bid) => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) return true;
     return (
@@ -62,6 +65,25 @@ const BidManagement = () => {
     } catch (error) {
       console.error('Error updating bid status:', error);
       alert('Error updating status. Please try again.');
+    }
+  };
+
+  const handleDeleteClick = (bid) => {
+    setDeletingBid(bid);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingBid) return;
+    setDeleteLoading(true);
+    try {
+      await bidService.deleteBid(deletingBid.id);
+      setDeletingBid(null);
+      fetchBids();
+    } catch (error) {
+      console.error('Error deleting bid:', error);
+      alert(error.response?.data?.error || 'Error deleting bid. Please try again.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -129,6 +151,17 @@ const BidManagement = () => {
     setAttachmentPreviewUrl('');
   };
 
+  const handleViewAttachmentsList = (bid) => {
+    console.log('Opening attachments list for bid:', bid);
+    setSelectedBid(bid);
+    setShowAttachmentsList(true);
+  };
+
+  const handleCloseAttachmentsList = () => {
+    setShowAttachmentsList(false);
+    setSelectedBid(null);
+  };
+
   return (
     <div className="p-6 lg:p-8">
         <div className="mb-8">
@@ -136,7 +169,7 @@ const BidManagement = () => {
           <p className="text-gray-600">Review and respond to vendor submissions</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <div className="bg-white border border-gray-300 p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -147,12 +180,12 @@ const BidManagement = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search vendor name or tender title..."
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="w-full px-4 py-2.5 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <button
               onClick={() => setSearchTerm('')}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+              className="px-6 py-2 border border-gray-300 hover:bg-gray-100"
             >
               Clear Search
             </button>
@@ -164,16 +197,15 @@ const BidManagement = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : filteredBids.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-            <div className="text-6xl mb-4">💰</div>
+          <div className="bg-white border border-gray-300 p-12 text-center">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Bids Found</h3>
             <p className="text-gray-600">Bids will appear here once vendors submit proposals.</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white border border-gray-300 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-gray-100 border-b border-gray-300">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Vendor
@@ -198,12 +230,12 @@ const BidManagement = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-300">
                   {filteredBids.map((bid, index) => (
-                    <tr key={bid.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={bid.id} className="hover:bg-gray-100">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-semibold mr-3">
+                          <div className="w-10 h-10 bg-green-600 flex items-center justify-center text-white font-semibold mr-3">
                             {bid.vendor_name?.charAt(0).toUpperCase() || 'V'}
                           </div>
                           <div>
@@ -225,7 +257,7 @@ const BidManagement = () => {
                             BDT {Number(bid.bid_amount).toLocaleString('en-US')}
                           </div>
                           {index === 0 && (
-                            <span className="ml-2 text-xs font-semibold px-2 py-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                            <span className="ml-2 text-xs font-semibold px-2 py-1 bg-amber-100 text-amber-700 border border-amber-300">
                               Highest
                             </span>
                           )}
@@ -235,7 +267,7 @@ const BidManagement = () => {
                         <select
                           value={bid.status}
                           onChange={(e) => handleStatusUpdate(bid.id, e.target.value)}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${getStatusColor(bid.status)}`}
+                          className={`text-xs font-semibold px-3 py-1.5 border cursor-pointer ${getStatusColor(bid.status)}`}
                         >
                           <option value="submitted">Submitted</option>
                           <option value="shortlisted">Shortlisted</option>
@@ -248,22 +280,29 @@ const BidManagement = () => {
                           {new Date(bid.submitted_at).toLocaleDateString()}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => handleViewDetails(bid)}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                        >
-                          View Details
-                        </button>
-                        {bid.attachment_url && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewDetails(bid)}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs"
+                          >
+                            View Details
+                          </button>
                           <button
                             type="button"
-                            onClick={() => handlePreviewAttachment(bid.attachment_url, `Attachment for ${bid.vendor_name || 'bid'}`)}
-                            className="inline-block px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+                            onClick={() => handleViewAttachmentsList(bid)}
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium text-xs"
                           >
-                            View Attachment
+                            Attachments
                           </button>
-                        )}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClick(bid)}
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -273,35 +312,70 @@ const BidManagement = () => {
           </div>
         )}
 
+        {/* Delete Confirmation Modal */}
+        {deletingBid && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white max-w-md w-full p-6">
+              <div className="flex items-start mb-4">
+                <div className="w-12 h-12 bg-red-100 flex items-center justify-center mr-4 flex-shrink-0">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Delete Bid</h3>
+                  <p className="text-gray-600 text-sm">
+                    Are you sure you want to delete the bid from <span className="font-semibold text-gray-900">{deletingBid.vendor_name}</span> for <span className="font-semibold text-gray-900">"{deletingBid.tender_title}"</span>? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setDeletingBid(null)}
+                  disabled={deleteLoading}
+                  className="px-5 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleteLoading}
+                  className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {showDetailModal && selectedBid && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+            <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-300 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-900">Bid Details</h2>
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600"
                 >
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                [X]
                 </button>
               </div>
               <div className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-100 p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Vendor Name</div>
                     <div className="font-semibold text-gray-900">{selectedBid.vendor_name}</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-100 p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Company</div>
                     <div className="font-semibold text-gray-900">{selectedBid.company_name || 'N/A'}</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-100 p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Email</div>
                     <div className="font-semibold text-gray-900">{selectedBid.vendor_email}</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-100 p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Bid Amount (BDT)</div>
                     <div className="font-semibold text-gray-900">
                       BDT {Number(selectedBid.bid_amount).toLocaleString('en-US')}
@@ -309,14 +383,14 @@ const BidManagement = () => {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-100 p-4">
                   <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Tender</div>
                   <div className="font-semibold text-gray-900">{selectedBid.tender_title}</div>
                   <div className="text-sm text-gray-600">{selectedBid.reference_no}</div>
                 </div>
 
                 {selectedBid.proposal_summary && (
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-100 p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Proposal Summary</div>
                     <div className="text-gray-700 whitespace-pre-line">
                       {selectedBid.proposal_summary}
@@ -324,44 +398,71 @@ const BidManagement = () => {
                   </div>
                 )}
 
-                {selectedBid.attachment_url && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Attachments</div>
-                    {Array.isArray(selectedBid.attachment_url) ? (
-                      <div className="space-y-2">
-                        {selectedBid.attachment_url.map((url, idx) => (
+                {(selectedBid.documents || []).length > 0 ? (
+                  <div className="bg-gray-100 p-4">
+                    <div className="text-xs font-semibold text-gray-600 uppercase mb-3">Attachments</div>
+                    <div className="space-y-3">
+                      {(selectedBid.documents || []).map((doc, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-300">
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-900">{doc.file_name}</span>
+                          </div>
                           <button
-                            key={idx}
                             type="button"
-                            onClick={() => handlePreviewAttachment(url, `Attachment ${idx + 1} for ${selectedBid.vendor_name || 'bid'}`)}
-                            className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium"
+                            onClick={() => handlePreviewAttachment(doc.file_url, doc.file_name)}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
                           >
-                            <span>📄</span>
-                            View Document {idx + 1}
+                            View
                           </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : selectedBid.attachment_url ? (
+                  <div className="bg-gray-100 p-4">
+                    <div className="text-xs font-semibold text-gray-600 uppercase mb-3">Attachments</div>
+                    {Array.isArray(selectedBid.attachment_url) ? (
+                      <div className="space-y-3">
+                    {(selectedBid.attachment_url || []).map((url, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-300">
+                            <div className="flex items-center">
+                              <span className="text-sm text-gray-900">Document {idx + 1}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handlePreviewAttachment(url, `Attachment ${idx + 1} for ${selectedBid.vendor_name || 'bid'}`)}
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                            >
+                              View
+                            </button>
+                          </div>
                         ))}
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => handlePreviewAttachment(selectedBid.attachment_url, `Attachment for ${selectedBid.vendor_name || 'bid'}`)}
-                        className="text-blue-600 hover:text-blue-700 flex items-center gap-2 font-medium"
-                      >
-                        <span>📄</span>
-                        View Document
-                      </button>
+                      <div className="flex items-center justify-between p-3 bg-white border border-gray-300">
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-900">Attachment</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePreviewAttachment(selectedBid.attachment_url, `Attachment for ${selectedBid.vendor_name || 'bid'}`)}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                        >
+                          View
+                        </button>
+                      </div>
                     )}
                   </div>
-                )}
+                ) : null}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-100 p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Current Status</div>
-                    <span className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusColor(selectedBid.status)}`}>
+                    <span className={`text-xs font-semibold px-3 py-1 ${getStatusColor(selectedBid.status)}`}>
                       {selectedBid.status.replace('_', ' ').toUpperCase()}
                     </span>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="bg-gray-100 p-4">
                     <div className="text-xs font-semibold text-gray-600 uppercase mb-1">Submitted On</div>
                     <div className="font-semibold text-gray-900">
                       {new Date(selectedBid.submitted_at).toLocaleString()}
@@ -369,36 +470,36 @@ const BidManagement = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-100">
+                <div className="pt-4 border-t border-gray-300">
                   <div className="text-xs font-semibold text-gray-600 uppercase mb-2">Update Status</div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleStatusUpdate(selectedBid.id, 'shortlisted')}
-                      className="flex-1 py-2.5 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition font-medium"
+                      className="flex-1 py-2.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 font-medium"
                     >
                       Shortlist
                     </button>
                     <button
                       onClick={() => handleStatusUpdate(selectedBid.id, 'accepted')}
-                      className="flex-1 py-2.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition font-medium"
+                      className="flex-1 py-2.5 bg-green-100 text-green-700 hover:bg-green-200 font-medium"
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => handleStatusUpdate(selectedBid.id, 'rejected')}
-                      className="flex-1 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition font-medium"
+                      className="flex-1 py-2.5 bg-red-100 text-red-700 hover:bg-red-200 font-medium"
                     >
                       Reject
                     </button>
                   </div>
                 </div>
               </div>
-              <div className="p-6 border-t border-gray-100 flex justify-end">
+              <div className="p-6 border-t border-gray-300 flex justify-end">
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 >
-                  Close
+                                 [X]
                 </button>
               </div>
             </div>
@@ -406,9 +507,9 @@ const BidManagement = () => {
         )}
 
         {showAttachmentPreview && attachmentPreviewUrl && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+            <div className="bg-white max-w-5xl w-full max-h-[90vh] overflow-hidden">
+              <div className="p-4 border-b border-gray-300 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{attachmentPreviewTitle}</h3>
                   <p className="text-sm text-gray-500">Previewing uploaded attachment</p>
@@ -418,12 +519,10 @@ const BidManagement = () => {
                   onClick={handleCloseAttachmentPreview}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                [X]
                 </button>
               </div>
-              <div className="bg-gray-50 p-4 h-[80vh] overflow-auto">
+              <div className="bg-gray-100 p-4 h-[80vh] overflow-auto">
                 {getAttachmentPreviewType(attachmentPreviewUrl) === 'pdf' ? (
                   <iframe
                     src={attachmentPreviewUrl}
@@ -443,6 +542,119 @@ const BidManagement = () => {
                     </a>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAttachmentsList && selectedBid && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+            <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-300 flex justify-between items-center">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Bid Attachments</h2>
+                  <p className="text-sm text-gray-500">Vendor: {selectedBid.vendor_name}</p>
+                </div>
+                <button
+                  onClick={handleCloseAttachmentsList}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                [X]
+                </button>
+              </div>
+              <div className="p-6">
+                {(selectedBid.documents || []).length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedBid.documents.map((doc, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-4 bg-gray-100 border border-gray-300">
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-900">{doc.file_name}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handlePreviewAttachment(doc.file_url, doc.file_name)}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                          >
+                            View
+                          </button>
+                          <a
+                            href={doc.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : selectedBid.attachment_url ? (
+                  <div className="space-y-3">
+                    {Array.isArray(selectedBid.attachment_url) ? (
+                      selectedBid.attachment_url.map((url, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-gray-100 border border-gray-300">
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-900">Document {idx + 1}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handlePreviewAttachment(url, `Document ${idx + 1}`)}
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                            >
+                              View
+                            </button>
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-center justify-between p-4 bg-gray-100 border border-gray-300">
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-900">Attachment</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handlePreviewAttachment(selectedBid.attachment_url, 'Attachment')}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+                          >
+                            View
+                          </button>
+                          <a
+                            href={selectedBid.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No attachments found for this bid</p>
+                  </div>
+                )}
+              </div>
+              <div className="p-6 border-t border-gray-300 flex justify-end">
+                <button
+                  onClick={handleCloseAttachmentsList}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>

@@ -36,7 +36,20 @@ try {
     $docStmt = $conn->prepare($docQuery);
     $docStmt->bindParam(':tender_id', $tenderId);
     $docStmt->execute();
-    $tender['documents'] = $docStmt->fetchAll();
+    $documents = $docStmt->fetchAll();
+    
+    // Convert relative URLs to absolute URLs
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $baseUrl = $protocol . '://' . $host;
+    
+    foreach ($documents as &$doc) {
+        if (!preg_match('/^https?:\/\//', $doc['file_url'])) {
+            $doc['file_url'] = $baseUrl . '/' . ltrim($doc['file_url'], '/');
+        }
+    }
+    
+    $tender['documents'] = $documents;
     
     // Get bids count
     $bidCountQuery = "SELECT COUNT(*) as count FROM bids WHERE tender_id = :tender_id";

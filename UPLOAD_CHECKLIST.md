@@ -55,6 +55,7 @@
   - [ ] `tenders/show.php`
   - [ ] `tenders/create.php`
   - [ ] `tenders/update.php`
+  - [ ] `tenders/upload-document.php` (NEW - Document upload endpoint)
 
 ### Bids Directory
 - [ ] `bids/` folder → upload to `public_html/api/`

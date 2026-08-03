@@ -41,7 +41,8 @@ public_html/ (or htdocs/)
 │   │   ├── index.php                  # Existing
 │   │   ├── show.php                   # Existing
 │   │   ├── create.php                 # Existing
-│   │   └── update.php                 # Existing
+│   │   ├── update.php                 # Existing
+│   │   └── upload-document.php        # NEW - Document upload endpoint
 │   │
 │   ├── bids/                          # Bid management endpoints
 │   │   ├── submit.php                 # Existing

@@ -40,12 +40,29 @@ try {
         $stmt->execute();
         $bids = $stmt->fetchAll();
         
-        // Convert relative attachment URLs to absolute URLs
+        // Get bid documents for each bid
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'];
         $baseUrl = $protocol . '://' . $host;
         
         foreach ($bids as &$bid) {
+            // Get documents for this bid
+            $docQuery = "SELECT file_name, file_url FROM bid_documents WHERE bid_id = :bid_id";
+            $docStmt = $conn->prepare($docQuery);
+            $docStmt->bindParam(':bid_id', $bid['id']);
+            $docStmt->execute();
+            $documents = $docStmt->fetchAll();
+            
+            // Convert relative URLs to absolute URLs
+            foreach ($documents as &$doc) {
+                if (!preg_match('/^https?:\/\//', $doc['file_url'])) {
+                    $doc['file_url'] = $baseUrl . '/' . ltrim($doc['file_url'], '/');
+                }
+            }
+            
+            $bid['documents'] = $documents;
+            
+            // Handle legacy attachment_url for backward compatibility
             if ($bid['attachment_url'] && !preg_match('/^https?:\/\//', $bid['attachment_url'])) {
                 $bid['attachment_url'] = $baseUrl . '/' . ltrim($bid['attachment_url'], '/');
             }

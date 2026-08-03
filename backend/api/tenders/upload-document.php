@@ -10,18 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Admin only
 $user = requireAdmin();
 
-if (!isset($_FILES['file']) || !isset($_POST['tender_id'])) {
-    sendJsonResponse(['error' => 'File and tender_id are required'], 400);
+// Check for files - handle both 'file' and 'file[]' formats
+if (!isset($_FILES['file']) && !isset($_FILES['file[]'])) {
+    sendJsonResponse(['error' => 'No files uploaded'], 400);
 }
 
-$file = $_FILES['file'];
+if (!isset($_POST['tender_id'])) {
+    sendJsonResponse(['error' => 'tender_id is required'], 400);
+}
+
+$files = isset($_FILES['file']) ? $_FILES['file'] : $_FILES['file[]'];
 $tenderId = $_POST['tender_id'];
-
-// Validate file upload
-$validation = validateFileUpload($file);
-if (!$validation['valid']) {
-    sendJsonResponse(['error' => $validation['message']], 400);
-}
 
 $database = new Database();
 $conn = $database->getConnection();
@@ -34,41 +33,110 @@ try {
     $checkStmt->execute();
     
     if ($checkStmt->rowCount() === 0) {
-        sendJsonResponse(['error' => 'Tender not found'], 404);
+        sendJsonResponse(['error' => 'Tender not found with ID: ' . $tenderId], 404);
     }
     
-    // Generate safe filename
-    $safeFileName = sanitizeFileName($file['name']);
-    $uploadPath = UPLOAD_DIR . $safeFileName;
-    
-    // Move uploaded file
-    if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
-        sendJsonResponse(['error' => 'Failed to upload file'], 500);
+    // Check if upload directory exists and is writable
+    if (!is_dir(UPLOAD_DIR)) {
+        sendJsonResponse(['error' => 'Upload directory does not exist'], 500);
     }
     
-    // Store in database
-    $fileUrl = '/uploads/' . $safeFileName;
-    $query = "INSERT INTO tender_documents (tender_id, file_name, file_url) 
-              VALUES (:tender_id, :file_name, :file_url)";
+    if (!is_writable(UPLOAD_DIR)) {
+        sendJsonResponse(['error' => 'Upload directory is not writable'], 500);
+    }
     
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(':tender_id', $tenderId);
-    $stmt->bindParam(':file_name', $file['name']);
-    $stmt->bindParam(':file_url', $fileUrl);
+    // Reorganize files array for multiple uploads
+    $filesArray = [];
     
-    if ($stmt->execute()) {
+    // Handle different upload formats
+    if (is_array($files['name'])) {
+        // Multiple files uploaded as file[]
+        for ($i = 0; $i < count($files['name']); $i++) {
+            if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                $filesArray[] = [
+                    'name' => $files['name'][$i],
+                    'type' => $files['type'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'error' => $files['error'][$i],
+                    'size' => $files['size'][$i]
+                ];
+            }
+        }
+    } elseif ($files['error'] === UPLOAD_ERR_OK) {
+        // Single file uploaded
+        $filesArray[] = $files;
+    }
+    
+    if (empty($filesArray)) {
+        sendJsonResponse(['error' => 'No valid files to upload'], 400);
+    }
+    
+    // Handle single file or multiple files
+    $uploadedFiles = [];
+    $errors = [];
+    
+    foreach ($filesArray as $file) {
+        // Check for upload errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errors[] = $file['name'] . ': Upload error code ' . $file['error'];
+            continue;
+        }
+        
+        // Validate file upload
+        $validation = validateFileUpload($file);
+        if (!$validation['valid']) {
+            $errors[] = $file['name'] . ': ' . $validation['message'];
+            continue;
+        }
+        
+        // Generate safe filename with timestamp to avoid conflicts
+        $timestamp = time();
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $baseName = pathinfo($file['name'], PATHINFO_FILENAME);
+        $safeFileName = sanitizeFileName($baseName) . '_' . $timestamp . '.' . $extension;
+        $uploadPath = UPLOAD_DIR . $safeFileName;
+        
+        // Move uploaded file
+        if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            $errors[] = $file['name'] . ': Failed to upload file - move_uploaded_file failed';
+            continue;
+        }
+        
+        // Store in database
+        $fileUrl = '/uploads/' . $safeFileName;
+        $query = "INSERT INTO tender_documents (tender_id, file_name, file_url, file_size) 
+                  VALUES (:tender_id, :file_name, :file_url, :file_size)";
+        
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(':tender_id', $tenderId);
+        $stmt->bindParam(':file_name', $file['name']);
+        $stmt->bindParam(':file_url', $fileUrl);
+        $stmt->bindParam(':file_size', $file['size']);
+        
+        if ($stmt->execute()) {
+            $uploadedFiles[] = [
+                'document_id' => $conn->lastInsertId(),
+                'file_name' => $file['name'],
+                'file_url' => $fileUrl
+            ];
+        } else {
+            // Delete file if database insert fails
+            unlink($uploadPath);
+            $errors[] = $file['name'] . ': Failed to save document';
+        }
+    }
+    
+    if (!empty($uploadedFiles)) {
         sendJsonResponse([
-            'message' => 'Document uploaded successfully',
-            'document_id' => $conn->lastInsertId(),
-            'file_url' => $fileUrl
+            'message' => count($uploadedFiles) . ' document(s) uploaded successfully',
+            'uploaded_files' => $uploadedFiles,
+            'errors' => $errors
         ], 201);
     } else {
-        // Delete file if database insert fails
-        unlink($uploadPath);
-        sendJsonResponse(['error' => 'Failed to save document'], 500);
+        sendJsonResponse(['error' => 'No files uploaded successfully', 'errors' => $errors], 500);
     }
     
 } catch (PDOException $e) {
-    sendJsonResponse(['error' => 'Database error'], 500);
+    sendJsonResponse(['error' => 'Database error: ' . $e->getMessage()], 500);
 }
 ?>

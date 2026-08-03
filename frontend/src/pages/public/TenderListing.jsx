@@ -319,7 +319,6 @@ const TenderListing = () => {
                             rel="noopener noreferrer"
                             className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 hover:bg-gray-100 transition"
                           >
-                            <span className="text-2xl">📄</span>
                             <div>
                               <div className="font-medium text-gray-900">{doc.file_name}</div>
                               <div className="text-sm text-gray-500">Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}</div>

@@ -7,6 +7,11 @@ const TenderManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTender, setEditingTender] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [existingDocuments, setExistingDocuments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [deletingTender, setDeletingTender] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     reference_no: '',
@@ -25,7 +30,17 @@ const TenderManagement = () => {
   const fetchTenders = async () => {
     try {
       const response = await tenderService.getTenders();
-      setTenders(response.data.data ? response.data.data.tenders : response.data.tenders);
+      let fetchedTenders = response.data.data ? response.data.data.tenders : response.data.tenders;
+      
+      // Ensure documents are included for each tender
+      if (Array.isArray(fetchedTenders)) {
+        fetchedTenders = fetchedTenders.map(tender => ({
+          ...tender,
+          documents: tender.documents || []
+        }));
+      }
+      
+      setTenders(fetchedTenders);
     } catch (error) {
       console.error('Error fetching tenders:', error);
     } finally {
@@ -45,6 +60,8 @@ const TenderManagement = () => {
       closing_date: '',
       status: 'draft',
     });
+    setFiles([]);
+    setExistingDocuments([]);
     setShowModal(true);
   };
 
@@ -60,22 +77,86 @@ const TenderManagement = () => {
       closing_date: tender.closing_date,
       status: tender.status,
     });
+    setFiles([]);
+    setExistingDocuments(tender.documents || []);
     setShowModal(true);
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(prevFiles => [...prevFiles, ...selectedFiles]);
+  };
+
+  const handleRemoveFile = (index) => {
+    setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploading(true);
+    
     try {
+      let tenderId;
+      
       if (editingTender) {
         await tenderService.updateTender({ ...formData, id: editingTender.id });
+        tenderId = editingTender.id;
       } else {
-        await tenderService.createTender(formData);
+        const response = await tenderService.createTender(formData);
+        tenderId = response.data?.tender_id || response.data?.id;
       }
+      
+      // Upload files if any
+      if (files.length > 0 && tenderId) {
+        const formData = new FormData();
+        files.forEach(file => {
+          formData.append('file[]', file);
+        });
+        formData.append('tender_id', tenderId);
+        
+        try {
+          console.log('Uploading documents for tender ID:', tenderId);
+          console.log('Files to upload:', files.map(f => f.name));
+          const uploadResponse = await tenderService.uploadDocument(formData);
+          console.log('Upload response:', uploadResponse);
+        } catch (uploadError) {
+          console.error('Error uploading documents:', uploadError);
+          console.error('Upload error response:', uploadError.response?.data);
+          const uploadErrorMessage = uploadError.response?.data?.error || uploadError.message || 'Unknown error';
+          alert(`Tender saved but document upload failed: ${uploadErrorMessage}. Please try uploading documents again.`);
+        }
+      }
+      
       setShowModal(false);
+      setFiles([]);
+      setExistingDocuments([]);
       fetchTenders();
     } catch (error) {
       console.error('Error saving tender:', error);
-      alert('Error saving tender. Please try again.');
+      console.error('Error response:', error.response?.data);
+      const errorMessage = error.response?.data?.error || error.message || 'Error saving tender. Please try again.';
+      alert(errorMessage);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteClick = (tender) => {
+    setDeletingTender(tender);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingTender) return;
+    setDeleteLoading(true);
+    try {
+      await tenderService.deleteTender(deletingTender.id);
+      setDeletingTender(null);
+      fetchTenders();
+    } catch (error) {
+      console.error('Error deleting tender:', error);
+      alert(error.response?.data?.error || 'Error deleting tender. Please try again.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -115,11 +196,8 @@ const TenderManagement = () => {
           </div>
           <button
             onClick={handleCreate}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm hover:shadow"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
             Create Tender
           </button>
         </div>
@@ -129,25 +207,21 @@ const TenderManagement = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : tenders.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-            <div className="text-6xl mb-4">📋</div>
+          <div className="bg-white border border-gray-300 p-12 text-center">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Tenders Yet</h3>
             <p className="text-gray-600 mb-6">Create your first tender to get started.</p>
             <button
               onClick={handleCreate}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
               Create First Tender
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white border border-gray-300 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
+                <thead className="bg-gray-100 border-b border-gray-300">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Title
@@ -172,9 +246,9 @@ const TenderManagement = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-300">
                   {tenders.map((tender) => (
-                    <tr key={tender.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={tender.id} className="hover:bg-gray-100">
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">{tender.title}</div>
                       </td>
@@ -188,7 +262,7 @@ const TenderManagement = () => {
                         <select
                           value={tender.status}
                           onChange={(e) => handleStatusChange(tender, e.target.value)}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${getStatusColor(tender.status)}`}
+                          className={`text-xs font-semibold px-3 py-1.5 border cursor-pointer ${getStatusColor(tender.status)}`}
                         >
                           <option value="draft">Draft</option>
                           <option value="active">Active</option>
@@ -207,19 +281,27 @@ const TenderManagement = () => {
                           {tender.bid_count || 0}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => handleEdit(tender)}
-                          className="text-blue-600 hover:text-blue-700 transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <Link
-                          to={`/tenders/${tender.id}`}
-                          className="text-blue-600 hover:text-blue-700 transition-colors"
-                        >
-                          View
-                        </Link>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(tender)}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium"
+                          >
+                            Edit
+                          </button>
+                          <Link
+                            to={`/tenders/${tender.id}`}
+                            className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-xs font-medium"
+                          >
+                            View
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteClick(tender)}
+                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -229,12 +311,49 @@ const TenderManagement = () => {
           </div>
         )}
 
-        {/* Modal */}
+        {/* Delete Confirmation Modal */}
+        {deletingTender && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white max-w-md w-full p-6">
+              <div className="flex items-start mb-4">
+                <div className="w-12 h-12 bg-red-100 flex items-center justify-center mr-4 flex-shrink-0">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Delete Tender</h3>
+                  <p className="text-gray-600 text-sm">
+                    Are you sure you want to delete <span className="font-semibold text-gray-900">"{deletingTender.title}"</span>? This will also delete all associated bids and documents. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setDeletingTender(null)}
+                  disabled={deleteLoading}
+                  className="px-5 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleteLoading}
+                  className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create / Edit Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-primary">
+            <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-300">
+                <h2 className="text-xl font-semibold text-gray-900">
                   {editingTender ? 'Edit Tender' : 'Create New Tender'}
                 </h2>
               </div>
@@ -248,7 +367,7 @@ const TenderManagement = () => {
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -261,7 +380,7 @@ const TenderManagement = () => {
                     required
                     value={formData.reference_no}
                     onChange={(e) => setFormData({ ...formData, reference_no: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
@@ -273,7 +392,7 @@ const TenderManagement = () => {
                     required
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select category</option>
                     <option value="construction">Construction</option>
@@ -293,8 +412,63 @@ const TenderManagement = () => {
                     rows="4"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                    className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Documents
+                  </label>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">You can upload multiple files at once</p>
+                  
+                  {existingDocuments && existingDocuments.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <h4 className="text-sm font-medium text-gray-700">Existing Documents:</h4>
+                      {existingDocuments.map((doc, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-100 border border-gray-300">
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-900">{doc.file_name}</span>
+                          </div>
+                          <a
+                            href={doc.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          >
+                            View
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {files.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <h4 className="text-sm font-medium text-gray-700">New Files to Upload:</h4>
+                      {files.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-100 border border-gray-300">
+                          <div className="flex items-center">
+                            <span className="text-sm text-gray-900">{file.name}</span>
+                            <span className="text-xs text-gray-500 ml-2">({(file.size / 1024).toFixed(2)} KB)</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(index)}
+                            className="text-red-600 hover:text-red-700 text-sm font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -308,7 +482,7 @@ const TenderManagement = () => {
                       step="0.01"
                       value={formData.estimated_budget}
                       onChange={(e) => setFormData({ ...formData, estimated_budget: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -319,7 +493,7 @@ const TenderManagement = () => {
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="draft">Draft</option>
                       <option value="active">Active</option>
@@ -340,7 +514,7 @@ const TenderManagement = () => {
                       required
                       value={formData.publish_date}
                       onChange={(e) => setFormData({ ...formData, publish_date: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
@@ -353,7 +527,7 @@ const TenderManagement = () => {
                       required
                       value={formData.closing_date}
                       onChange={(e) => setFormData({ ...formData, closing_date: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -362,15 +536,16 @@ const TenderManagement = () => {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                    className="px-6 py-2 border border-gray-300 hover:bg-gray-100"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-accent hover:bg-accent-dark text-white rounded-lg transition"
+                    disabled={uploading}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingTender ? 'Update' : 'Create'}
+                    {uploading ? 'Uploading...' : (editingTender ? 'Update' : 'Create')}
                   </button>
                 </div>
               </form>

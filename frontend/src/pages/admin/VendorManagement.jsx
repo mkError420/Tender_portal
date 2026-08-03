@@ -98,16 +98,15 @@ const VendorManagement = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : vendors.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-          <div className="text-6xl mb-4">👥</div>
+        <div className="bg-white border border-gray-300 p-12 text-center">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No Vendors Yet</h3>
           <p className="text-gray-600">Vendors will appear here once they register on the platform.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white border border-gray-300 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-100 border-b border-gray-300">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Vendor
@@ -129,12 +128,12 @@ const VendorManagement = () => {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-300">
                 {vendors.map((vendor) => (
-                  <tr key={vendor.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={vendor.id} className="hover:bg-gray-100">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold mr-3">
+                        <div className="w-10 h-10 bg-blue-600 flex items-center justify-center text-white font-semibold mr-3">
                           {vendor.name?.charAt(0).toUpperCase() || 'V'}
                         </div>
                         <div>
@@ -153,7 +152,7 @@ const VendorManagement = () => {
                       <select
                         value={vendor.status}
                         onChange={(e) => handleStatusChange(vendor, e.target.value)}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${getStatusColor(vendor.status)}`}
+                        className={`text-xs font-semibold px-3 py-1.5 border cursor-pointer ${getStatusColor(vendor.status)}`}
                       >
                         <option value="pending">Pending</option>
                         <option value="active">Active</option>
@@ -168,13 +167,13 @@ const VendorManagement = () => {
                     <td className="px-6 py-4 flex gap-2">
                       <button
                         onClick={() => handleViewDetails(vendor)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700"
                       >
                         View Details
                       </button>
                       <button
                         onClick={() => handleDeleteVendor(vendor)}
-                        className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                        className="text-sm font-medium text-red-600 hover:text-red-700"
                       >
                         Delete
                       </button>
@@ -190,21 +189,19 @@ const VendorManagement = () => {
       {/* Vendor Details Modal */}
       {showModal && selectedVendor && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+          <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-300 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">Vendor Details</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                [X]
               </button>
             </div>
             <div className="p-6">
               <div className="flex items-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl font-bold mr-4">
+                <div className="w-16 h-16 bg-blue-600 flex items-center justify-center text-white text-2xl font-bold mr-4">
                   {selectedVendor.name?.charAt(0).toUpperCase() || 'V'}
                 </div>
                 <div>
@@ -214,29 +211,29 @@ const VendorManagement = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-100 p-4">
                   <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Phone</label>
                   <div className="text-sm text-gray-900">{selectedVendor.phone || '-'}</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-100 p-4">
                   <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Company</label>
                   <div className="text-sm text-gray-900">{selectedVendor.company_name || '-'}</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-100 p-4">
                   <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Trade License</label>
                   <div className="text-sm text-gray-900">{selectedVendor.trade_license_no || '-'}</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-100 p-4">
                   <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Status</label>
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusColor(selectedVendor.status)}`}>
+                  <span className={`text-xs font-semibold px-3 py-1 ${getStatusColor(selectedVendor.status)}`}>
                     {selectedVendor.status?.toUpperCase() || 'ACTIVE'}
                   </span>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 md:col-span-2">
+                <div className="bg-gray-100 p-4 md:col-span-2">
                   <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Address</label>
                   <div className="text-sm text-gray-900">{selectedVendor.address || '-'}</div>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4 md:col-span-2">
+                <div className="bg-gray-100 p-4 md:col-span-2">
                   <label className="block text-xs font-semibold text-gray-600 uppercase mb-1">Registration Date</label>
                   <div className="text-sm text-gray-900">
                     {new Date(selectedVendor.created_at).toLocaleString()}
@@ -244,16 +241,16 @@ const VendorManagement = () => {
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-gray-300 flex justify-end gap-3">
               <button
                 onClick={() => handleDeleteVendor(selectedVendor)}
-                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium"
               >
                 Delete Vendor
               </button>
               <button
                 onClick={() => setShowModal(false)}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium"
               >
                 Close
               </button>

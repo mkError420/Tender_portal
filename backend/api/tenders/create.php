@@ -52,22 +52,10 @@ try {
     if ($stmt->execute()) {
         $tenderId = $conn->lastInsertId();
         
-        // Handle document uploads if provided
-        if (isset($data['documents']) && is_array($data['documents'])) {
-            foreach ($data['documents'] as $doc) {
-                $docQuery = "INSERT INTO tender_documents (tender_id, file_name, file_url) 
-                            VALUES (:tender_id, :file_name, :file_url)";
-                $docStmt = $conn->prepare($docQuery);
-                $docStmt->bindParam(':tender_id', $tenderId);
-                $docStmt->bindParam(':file_name', $doc['file_name']);
-                $docStmt->bindParam(':file_url', $doc['file_url']);
-                $docStmt->execute();
-            }
-        }
-        
         sendJsonResponse([
             'message' => 'Tender created successfully',
-            'tender_id' => $tenderId
+            'tender_id' => $tenderId,
+            'id' => $tenderId
         ], 201);
     } else {
         sendJsonResponse(['error' => 'Failed to create tender'], 500);

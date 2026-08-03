@@ -72,6 +72,6 @@ function sanitizeFileName($fileName) {
     $extension = pathinfo($fileName, PATHINFO_EXTENSION);
     $baseName = pathinfo($fileName, PATHINFO_FILENAME);
     $baseName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $baseName);
-    return $baseName . '_' . time() . '.' . $extension;
+    return $baseName . '.' . $extension;
 }
 ?>

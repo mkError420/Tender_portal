@@ -7,4 +7,5 @@ export const adminService = {
   deleteVendor: (vendorId) => api.delete('/admin/delete-vendor.php', { data: { vendor_id: vendorId } }),
   getAdmins: () => api.get('/admin/admins.php'),
   createAdmin: (adminData) => api.post('/admin/create-admin.php', adminData),
+  deleteAdmin: (adminId) => api.delete('/admin/delete-admin.php', { data: { admin_id: adminId } }),
 };

@@ -50,12 +50,25 @@ try {
     $tenders = $stmt->fetchAll();
     
     // Get documents for each tender
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $baseUrl = $protocol . '://' . $host;
+    
     foreach ($tenders as &$tender) {
-        $docQuery = "SELECT id, file_name, file_url FROM tender_documents WHERE tender_id = :tender_id";
+        $docQuery = "SELECT id, file_name, file_url, uploaded_at FROM tender_documents WHERE tender_id = :tender_id";
         $docStmt = $conn->prepare($docQuery);
         $docStmt->bindParam(':tender_id', $tender['id']);
         $docStmt->execute();
-        $tender['documents'] = $docStmt->fetchAll();
+        $documents = $docStmt->fetchAll();
+        
+        // Convert relative URLs to absolute URLs
+        foreach ($documents as &$doc) {
+            if (!preg_match('/^https?:\/\//', $doc['file_url'])) {
+                $doc['file_url'] = $baseUrl . '/' . ltrim($doc['file_url'], '/');
+            }
+        }
+        
+        $tender['documents'] = $documents;
     }
     
     sendJsonResponse(['tenders' => $tenders]);

@@ -3,7 +3,8 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/middleware.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+// Allow both PUT and POST methods (some servers don't support PUT)
+if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJsonResponse(['error' => 'Method not allowed'], 405);
 }
 
@@ -21,7 +22,7 @@ $conn = $database->getConnection();
 
 try {
     // Check if tender exists
-    $checkQuery = "SELECT id FROM tenders WHERE id = :id";
+    $checkQuery = "SELECT id, reference_no FROM tenders WHERE id = :id";
     $checkStmt = $conn->prepare($checkQuery);
     $checkStmt->bindParam(':id', $data['id']);
     $checkStmt->execute();
@@ -29,6 +30,8 @@ try {
     if ($checkStmt->rowCount() === 0) {
         sendJsonResponse(['error' => 'Tender not found'], 404);
     }
+    
+    $existingTender = $checkStmt->fetch();
     
     // Build dynamic update query
     $updateFields = [];
@@ -39,6 +42,18 @@ try {
     
     foreach ($allowedFields as $field) {
         if (isset($data[$field])) {
+            // Check if reference_no is being changed and if it conflicts with existing
+            if ($field === 'reference_no' && $data['reference_no'] !== $existingTender['reference_no']) {
+                $refCheckQuery = "SELECT id FROM tenders WHERE reference_no = :reference_no AND id != :id";
+                $refCheckStmt = $conn->prepare($refCheckQuery);
+                $refCheckStmt->bindParam(':reference_no', $data['reference_no']);
+                $refCheckStmt->bindParam(':id', $data['id']);
+                $refCheckStmt->execute();
+                
+                if ($refCheckStmt->rowCount() > 0) {
+                    sendJsonResponse(['error' => 'Reference number already exists'], 409);
+                }
+            }
             $updateFields[] = "$field = :$field";
             $params[":$field"] = $data[$field];
         }
@@ -63,6 +78,6 @@ try {
     }
     
 } catch (PDOException $e) {
-    sendJsonResponse(['error' => 'Database error'], 500);
+    sendJsonResponse(['error' => 'Database error: ' . $e->getMessage()], 500);
 }
 ?>
