@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
 import { useAuth } from '../../context/AuthContext';
 
@@ -17,10 +17,25 @@ const TenderListing = () => {
 
   const { isVendor } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Read URL parameters and set initial filters
+    const searchParam = searchParams.get('search');
+    const categoryParam = searchParams.get('category');
+    
+    if (searchParam || categoryParam) {
+      setFilters(prev => ({
+        ...prev,
+        search: searchParam || '',
+        category: categoryParam || ''
+      }));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchTenders();
-  }, [filters, isVendor]);
+  }, [filters, isVendor, searchParams]);
 
   const fetchTenders = async () => {
     try {
@@ -49,6 +64,15 @@ const TenderListing = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     fetchTenders();
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      status: 'active',
+      category: '',
+      search: '',
+    });
+    navigate('/tenders');
   };
 
   const handleOpenTenderDetails = async (id) => {
@@ -149,12 +173,19 @@ const TenderListing = () => {
               </select>
             </div>
             
-            <div className="flex items-end">
+            <div className="flex items-end gap-2">
               <button
                 type="submit"
-                className="w-full bg-accent hover:bg-accent-dark text-white font-semibold py-2 rounded-lg transition"
+                className="flex-1 bg-accent hover:bg-accent-dark text-white font-semibold py-2 rounded-lg transition"
               >
                 Apply Filters
+              </button>
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 font-semibold rounded-lg transition"
+              >
+                Clear
               </button>
             </div>
           </form>

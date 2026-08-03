@@ -12,4 +12,5 @@ export const tenderService = {
   uploadMultipleDocuments: (formData) => api.post('/tenders/upload-document.php', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  deleteDocument: (documentId) => api.delete('/backend/api/tenders/delete-document.php', { data: { document_id: documentId } }),
 };

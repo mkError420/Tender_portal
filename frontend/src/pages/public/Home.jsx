@@ -8,6 +8,12 @@ const Home = () => {
   const [selectedTender, setSelectedTender] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [searchFilters, setSearchFilters] = useState({
+    search: '',
+    category: ''
+  });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchActiveTenders();
@@ -24,8 +30,6 @@ const Home = () => {
       setLoading(false);
     }
   };
-
-  const navigate = useNavigate();
 
   const handleOpenTenderDetails = async (id) => {
     setShowDetailModal(true);
@@ -47,6 +51,35 @@ const Home = () => {
   const handleCloseDetailModal = () => {
     setShowDetailModal(false);
     setSelectedTender(null);
+  };
+
+  const handleSearchInputChange = (e) => {
+    setSearchFilters({
+      ...searchFilters,
+      search: e.target.value
+    });
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleCategoryChange = (e) => {
+    setSearchFilters({
+      ...searchFilters,
+      category: e.target.value
+    });
+  };
+
+  const handleSearch = () => {
+    // Navigate to TenderListing with search parameters
+    const params = new URLSearchParams();
+    if (searchFilters.search) params.append('search', searchFilters.search);
+    if (searchFilters.category) params.append('category', searchFilters.category);
+    
+    navigate(`/tenders?${params.toString()}`);
   };
 
   return (
@@ -86,21 +119,28 @@ const Home = () => {
             <input
               type="text"
               placeholder="Search tenders..."
+              value={searchFilters.search}
+              onChange={handleSearchInputChange}
+              onKeyPress={handleKeyPress}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
             />
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+            <select 
+              value={searchFilters.category}
+              onChange={handleCategoryChange}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+            >
               <option value="">All Categories</option>
               <option value="construction">Construction</option>
               <option value="it">IT Services</option>
               <option value="supplies">Supplies</option>
               <option value="consulting">Consulting</option>
             </select>
-            <Link
-              to="/tenders"
+            <button
+              onClick={handleSearch}
               className="bg-accent hover:bg-accent-dark text-white font-semibold px-8 py-3 rounded-lg transition text-center"
             >
               Search
-            </Link>
+            </button>
           </div>
         </div>
       </section>

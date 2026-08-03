@@ -91,6 +91,20 @@ const TenderManagement = () => {
     setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
   };
 
+  const handleRemoveExistingDocument = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this document?')) {
+      return;
+    }
+
+    try {
+      await tenderService.deleteDocument(documentId);
+      setExistingDocuments(prevDocs => prevDocs.filter(doc => doc.id !== documentId));
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert(error.response?.data?.error || 'Error deleting document. Please try again.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
@@ -436,14 +450,23 @@ const TenderManagement = () => {
                           <div className="flex items-center">
                             <span className="text-sm text-gray-900">{doc.file_name}</span>
                           </div>
-                          <a
-                            href={doc.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                          >
-                            View
-                          </a>
+                          <div className="flex items-center gap-3">
+                            <a
+                              href={doc.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                            >
+                              View
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveExistingDocument(doc.id)}
+                              className="text-red-600 hover:text-red-700 text-sm font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
