@@ -35,5 +35,23 @@ api.interceptors.response.use(
   }
 );
 
+export const getFileUrl = (url) => {
+  if (!url || typeof url !== 'string') return '#';
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) return '#';
+  try {
+    if (/^https?:\/\//i.test(trimmedUrl)) {
+      return trimmedUrl;
+    }
+    if (trimmedUrl.startsWith('//')) {
+      return `${window.location.protocol}${trimmedUrl}`;
+    }
+    return new URL(trimmedUrl, `${API_BASE_ORIGIN}/`).toString();
+  } catch (e) {
+    console.warn('Unable to normalize attachment URL:', url, e);
+    return '#';
+  }
+};
+
 export { API_BASE_URL, API_BASE_ORIGIN };
 export default api;

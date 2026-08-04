@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { getFileUrl } from '../../services/api';
 import { tenderService } from '../../services/tenderService';
 import { bidService } from '../../services/bidService';
 import { useAuth } from '../../context/AuthContext';
@@ -208,7 +209,7 @@ const TenderDetail = () => {
                     {tender.documents.map((doc) => (
                       <a
                         key={doc.id}
-                        href={doc.file_url}
+                        href={getFileUrl(doc.file_url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"

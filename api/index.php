@@ -56,7 +56,7 @@ if (empty($path)) {
 $filePath = __DIR__ . '/' . $path;
 
 if (preg_match('#^uploads/#', $path)) {
-    $publicFile = __DIR__ . '/../' . $path;
+    $publicFile = __DIR__ . '/' . $path;
     if (file_exists($publicFile) && is_file($publicFile)) {
         $mime = mime_content_type($publicFile);
         if (!$mime) {

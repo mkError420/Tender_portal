@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
 import { CATEGORY_UPDATED_EVENT, loadStoredCategories, mergeCategories } from '../../utils/categories';
+import { getFileUrl } from '../../services/api';
 
 const Home = () => {
   const [tenders, setTenders] = useState([]);
@@ -297,7 +298,8 @@ const Home = () => {
                       <h5 className="text-lg font-semibold text-primary mb-3">Attachments</h5>
                       <ul className="space-y-2">
                         {selectedTender.documents.map((document, index) => {
-                          const fileUrl = typeof document === 'string' ? document : document.file_url || document.url;
+                          let rawUrl = typeof document === 'string' ? document : document.file_url || document.url;
+                          const fileUrl = getFileUrl(rawUrl);
                           const fileName = typeof document === 'string'
                             ? `Document ${index + 1}`
                             : (document.file_name || `Document ${index + 1}`);

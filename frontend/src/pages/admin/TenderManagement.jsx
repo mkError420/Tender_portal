@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
+import { getFileUrl } from '../../services/api';
 import { loadStoredCategories, mergeCategories, persistCategories, normalizeCategory } from '../../utils/categories';
 
 const TenderManagement = () => {
@@ -147,7 +148,7 @@ const TenderManagement = () => {
         tenderId = editingTender.id;
       } else {
         const response = await tenderService.createTender(payload);
-        tenderId = response.data?.tender_id || response.data?.id;
+        tenderId = response.data?.data?.id || response.data?.tender_id || response.data?.id;
       }
       
       // Upload files if any
@@ -493,7 +494,7 @@ const TenderManagement = () => {
                           </div>
                           <div className="flex items-center gap-3">
                             <a
-                              href={doc.file_url}
+                              href={getFileUrl(doc.file_url)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
