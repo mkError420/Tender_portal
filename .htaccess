@@ -7,7 +7,10 @@
     # Pass Authorization header to PHP
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
     
-    # API routes - handle through api/index.php
+    # API routes - handle through api/index.php, but allow real uploaded files to be served directly
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-l
     RewriteRule ^api(/.*)?$ api/index.php [L]
     
     # Frontend routes - handle through index.html (React Router)

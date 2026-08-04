@@ -63,6 +63,24 @@ try {
     $stmt->execute($params);
     $tenders = $stmt->fetchAll();
 
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'rcmctender.free.je';
+    $baseUrl = $protocol . '://' . $host;
+
+    foreach ($tenders as &$tender) {
+        $docStmt = $db->prepare("SELECT id, file_name, file_url, file_size, uploaded_at FROM tender_documents WHERE tender_id = :tender_id");
+        $docStmt->execute([':tender_id' => $tender['id']]);
+        $documents = $docStmt->fetchAll();
+
+        foreach ($documents as &$document) {
+            if (!preg_match('/^https?:\/\//', $document['file_url'])) {
+                $document['file_url'] = $baseUrl . '/' . ltrim($document['file_url'], '/');
+            }
+        }
+
+        $tender['documents'] = $documents;
+    }
+
     Response::success("Tenders fetched successfully", [
         "count" => count($tenders),
         "tenders" => $tenders

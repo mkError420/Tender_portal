@@ -37,7 +37,7 @@ try {
     $updateFields = [];
     $params = [':id' => $data['id']];
     
-    $allowedFields = ['title', 'reference_no', 'description', 'category', 'estimated_budget', 
+    $allowedFields = ['title', 'reference_no', 'description', 'category', 'supplier_requirements', 'estimated_budget', 
                      'publish_date', 'closing_date', 'status'];
     
     foreach ($allowedFields as $field) {

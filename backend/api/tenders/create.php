@@ -33,9 +33,9 @@ try {
         sendJsonResponse(['error' => 'Reference number already exists'], 409);
     }
     
-    $query = "INSERT INTO tenders (title, reference_no, description, category, estimated_budget, 
+    $query = "INSERT INTO tenders (title, reference_no, description, category, supplier_requirements, estimated_budget, 
               publish_date, closing_date, status, created_by) 
-              VALUES (:title, :reference_no, :description, :category, :estimated_budget, 
+              VALUES (:title, :reference_no, :description, :category, :supplier_requirements, :estimated_budget, 
               :publish_date, :closing_date, :status, :created_by)";
     
     $stmt = $conn->prepare($query);
@@ -43,6 +43,7 @@ try {
     $stmt->bindParam(':reference_no', $data['reference_no']);
     $stmt->bindParam(':description', $data['description']);
     $stmt->bindParam(':category', $data['category']);
+    $stmt->bindParam(':supplier_requirements', $data['supplier_requirements']);
     $stmt->bindParam(':estimated_budget', $data['estimated_budget']);
     $stmt->bindParam(':publish_date', $data['publish_date']);
     $stmt->bindParam(':closing_date', $data['closing_date']);

@@ -194,6 +194,13 @@ const TenderDetail = () => {
                 <p className="text-gray-600 whitespace-pre-line">{tender.description}</p>
               </div>
 
+              {tender.supplier_requirements && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-primary mb-3">Supplier Requirements</h2>
+                  <p className="text-gray-600 whitespace-pre-line">{tender.supplier_requirements}</p>
+                </div>
+              )}
+
               {tender.documents && tender.documents.length > 0 && (
                 <div>
                   <h2 className="text-xl font-semibold text-primary mb-3">Documents</h2>

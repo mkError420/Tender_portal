@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
+import { CATEGORY_UPDATED_EVENT, loadStoredCategories, mergeCategories } from '../../utils/categories';
 
 const Home = () => {
   const [tenders, setTenders] = useState([]);
@@ -12,6 +13,7 @@ const Home = () => {
     search: '',
     category: ''
   });
+  const [categoryOptions, setCategoryOptions] = useState(() => loadStoredCategories());
 
   const navigate = useNavigate();
 
@@ -19,11 +21,21 @@ const Home = () => {
     fetchActiveTenders();
   }, []);
 
+  useEffect(() => {
+    const handleCategoryUpdate = () => {
+      setCategoryOptions(loadStoredCategories());
+    };
+
+    window.addEventListener(CATEGORY_UPDATED_EVENT, handleCategoryUpdate);
+    return () => window.removeEventListener(CATEGORY_UPDATED_EVENT, handleCategoryUpdate);
+  }, []);
+
   const fetchActiveTenders = async () => {
     try {
       const response = await tenderService.getTenders({ status: 'active' });
       const tenders = response.data.data ? response.data.data.tenders : response.data.tenders;
       setTenders(tenders.slice(0, 6));
+      setCategoryOptions((prev) => mergeCategories(prev, (tenders || []).map((tender) => tender.category)));
     } catch (error) {
       console.error('Error fetching tenders:', error);
     } finally {
@@ -130,10 +142,9 @@ const Home = () => {
               className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value="">All Categories</option>
-              <option value="construction">Construction</option>
-              <option value="it">IT Services</option>
-              <option value="supplies">Supplies</option>
-              <option value="consulting">Consulting</option>
+              {categoryOptions.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
             </select>
             <button
               onClick={handleSearch}
@@ -253,6 +264,12 @@ const Home = () => {
                     <p className="text-gray-600 whitespace-pre-line">
                       {selectedTender.description}
                     </p>
+                    {selectedTender.supplier_requirements && (
+                      <div className="mt-4">
+                        <h5 className="text-lg font-semibold text-primary mb-2">Supplier Requirements</h5>
+                        <p className="text-gray-600 whitespace-pre-line">{selectedTender.supplier_requirements}</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

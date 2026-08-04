@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
 import { useAuth } from '../../context/AuthContext';
+import { CATEGORY_UPDATED_EVENT, loadStoredCategories, mergeCategories } from '../../utils/categories';
 
 const TenderListing = () => {
   const [tenders, setTenders] = useState([]);
@@ -14,6 +15,7 @@ const TenderListing = () => {
   const [selectedTender, setSelectedTender] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState(() => loadStoredCategories());
 
   const { isVendor } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +39,15 @@ const TenderListing = () => {
     fetchTenders();
   }, [filters, isVendor, searchParams]);
 
+  useEffect(() => {
+    const handleCategoryUpdate = () => {
+      setCategoryOptions(loadStoredCategories());
+    };
+
+    window.addEventListener(CATEGORY_UPDATED_EVENT, handleCategoryUpdate);
+    return () => window.removeEventListener(CATEGORY_UPDATED_EVENT, handleCategoryUpdate);
+  }, []);
+
   const fetchTenders = async () => {
     try {
       setLoading(true);
@@ -46,7 +57,9 @@ const TenderListing = () => {
       if (filters.search) params.search = filters.search;
       
       const response = await tenderService.getTenders(params);
-      setTenders(response.data.data ? response.data.data.tenders : response.data.tenders);
+      const fetchedTenders = response.data.data ? response.data.data.tenders : response.data.tenders;
+      setTenders(fetchedTenders);
+      setCategoryOptions((prev) => mergeCategories(prev, (fetchedTenders || []).map((tender) => tender.category)));
     } catch (error) {
       console.error('Error fetching tenders:', error);
     } finally {
@@ -165,11 +178,9 @@ const TenderListing = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 <option value="">All Categories</option>
-                <option value="construction">Construction</option>
-                <option value="it">IT Services</option>
-                <option value="supplies">Supplies</option>
-                <option value="consulting">Consulting</option>
-                <option value="maintenance">Maintenance</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
               </select>
             </div>
             

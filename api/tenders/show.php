@@ -43,6 +43,16 @@ try {
     $docStmt->execute([':id' => $id]);
     $documents = $docStmt->fetchAll();
 
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'rcmctender.free.je';
+    $baseUrl = $protocol . '://' . $host;
+
+    foreach ($documents as &$document) {
+        if (!preg_match('/^https?:\/\//', $document['file_url'])) {
+            $document['file_url'] = $baseUrl . '/' . ltrim($document['file_url'], '/');
+        }
+    }
+
     $tender['documents'] = $documents;
     $tender['can_submit'] = $tender['status'] === 'active' && strtotime($tender['closing_date']) >= time() && empty($tender['has_bid']) ? true : false;
 

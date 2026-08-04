@@ -41,7 +41,14 @@ if (!$checkStmt->fetch()) {
     Response::error("Tender with id {$tenderId} not found.", 404);
 }
 
-if (empty($_FILES['file']) || !isset($_FILES['file']['name']) || (is_array($_FILES['file']['name']) && empty($_FILES['file']['name'][0])) || (!is_array($_FILES['file']['name']) && empty($_FILES['file']['name']))) {
+$filesInput = null;
+if (isset($_FILES['file'])) {
+    $filesInput = $_FILES['file'];
+} elseif (isset($_FILES['file[]'])) {
+    $filesInput = $_FILES['file[]'];
+}
+
+if ($filesInput === null || !isset($filesInput['name']) || (is_array($filesInput['name']) && empty($filesInput['name'][0])) || (!is_array($filesInput['name']) && empty($filesInput['name']))) {
     Response::error("No files were uploaded. Please attach at least one file. (FILES array was empty)", 400);
 }
 
@@ -139,25 +146,25 @@ function detectMimeType($tmpPath, $originalName) {
 // Phase 5 – Normalise $_FILES['file'] into an array of individual files
 // -----------------------------------------------------------------------
 $files = [];
-if (is_array($_FILES['file']['name'])) {
-    $fileCount = count($_FILES['file']['name']);
+if (is_array($filesInput['name'])) {
+    $fileCount = count($filesInput['name']);
     for ($i = 0; $i < $fileCount; $i++) {
         $files[] = [
-            'name'     => $_FILES['file']['name'][$i],
-            'type'     => $_FILES['file']['type'][$i],
-            'tmp_name' => $_FILES['file']['tmp_name'][$i],
-            'error'    => $_FILES['file']['error'][$i],
-            'size'     => $_FILES['file']['size'][$i],
+            'name'     => $filesInput['name'][$i],
+            'type'     => $filesInput['type'][$i],
+            'tmp_name' => $filesInput['tmp_name'][$i],
+            'error'    => $filesInput['error'][$i],
+            'size'     => $filesInput['size'][$i],
         ];
     }
 } else {
     // Single file not wrapped in array
     $files[] = [
-        'name'     => $_FILES['file']['name'],
-        'type'     => $_FILES['file']['type'],
-        'tmp_name' => $_FILES['file']['tmp_name'],
-        'error'    => $_FILES['file']['error'],
-        'size'     => $_FILES['file']['size'],
+        'name'     => $filesInput['name'],
+        'type'     => $filesInput['type'],
+        'tmp_name' => $filesInput['tmp_name'],
+        'error'    => $filesInput['error'],
+        'size'     => $filesInput['size'],
     ];
 }
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
+import { loadStoredCategories, mergeCategories, persistCategories, normalizeCategory } from '../../utils/categories';
 
 const TenderManagement = () => {
   const [tenders, setTenders] = useState([]);
@@ -12,11 +13,13 @@ const TenderManagement = () => {
   const [uploading, setUploading] = useState(false);
   const [deletingTender, setDeletingTender] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState(() => loadStoredCategories());
   const [formData, setFormData] = useState({
     title: '',
     reference_no: '',
     description: '',
     category: '',
+    supplier_requirements: '',
     estimated_budget: '',
     publish_date: '',
     closing_date: '',
@@ -25,6 +28,15 @@ const TenderManagement = () => {
 
   useEffect(() => {
     fetchTenders();
+  }, []);
+
+  useEffect(() => {
+    const handleCategoryUpdate = () => {
+      setCategoryOptions(loadStoredCategories());
+    };
+
+    window.addEventListener('tender-categories-updated', handleCategoryUpdate);
+    return () => window.removeEventListener('tender-categories-updated', handleCategoryUpdate);
   }, []);
 
   const fetchTenders = async () => {
@@ -41,6 +53,13 @@ const TenderManagement = () => {
       }
       
       setTenders(fetchedTenders);
+
+      if (Array.isArray(fetchedTenders)) {
+        const existingCategories = fetchedTenders
+          .map((tender) => tender.category)
+          .filter(Boolean);
+        setCategoryOptions((prev) => mergeCategories(prev, existingCategories));
+      }
     } catch (error) {
       console.error('Error fetching tenders:', error);
     } finally {
@@ -55,6 +74,7 @@ const TenderManagement = () => {
       reference_no: '',
       description: '',
       category: '',
+      supplier_requirements: '',
       estimated_budget: '',
       publish_date: new Date().toISOString().split('T')[0],
       closing_date: '',
@@ -72,6 +92,7 @@ const TenderManagement = () => {
       reference_no: tender.reference_no,
       description: tender.description,
       category: tender.category,
+      supplier_requirements: tender.supplier_requirements || '',
       estimated_budget: tender.estimated_budget || '',
       publish_date: tender.publish_date,
       closing_date: tender.closing_date,
@@ -108,15 +129,24 @@ const TenderManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
+
+    const normalizedCategory = normalizeCategory(formData.category);
+    const nextCategories = persistCategories([...categoryOptions, normalizedCategory]);
+    setCategoryOptions(nextCategories);
+
+    const payload = {
+      ...formData,
+      category: normalizedCategory,
+    };
     
     try {
       let tenderId;
       
       if (editingTender) {
-        await tenderService.updateTender({ ...formData, id: editingTender.id });
+        await tenderService.updateTender({ ...payload, id: editingTender.id });
         tenderId = editingTender.id;
       } else {
-        const response = await tenderService.createTender(formData);
+        const response = await tenderService.createTender(payload);
         tenderId = response.data?.tender_id || response.data?.id;
       }
       
@@ -124,7 +154,7 @@ const TenderManagement = () => {
       if (files.length > 0 && tenderId) {
         const formData = new FormData();
         files.forEach(file => {
-          formData.append('file[]', file);
+          formData.append('file', file);
         });
         formData.append('tender_id', tenderId);
         
@@ -402,19 +432,21 @@ const TenderManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category *
                   </label>
-                  <select
+                  <input
+                    type="text"
                     required
+                    list="tender-categories"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="Type or select a category"
                     className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select category</option>
-                    <option value="construction">Construction</option>
-                    <option value="it">IT Services</option>
-                    <option value="supplies">Supplies</option>
-                    <option value="consulting">Consulting</option>
-                    <option value="maintenance">Maintenance</option>
-                  </select>
+                  />
+                  <datalist id="tender-categories">
+                    {categoryOptions.map((category) => (
+                      <option key={category} value={category} />
+                    ))}
+                  </datalist>
+                  <p className="text-xs text-gray-500 mt-1">New categories are saved automatically for future tenders.</p>
                 </div>
 
                 <div>
@@ -426,6 +458,19 @@ const TenderManagement = () => {
                     rows="4"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Supplier Requirements
+                  </label>
+                  <textarea
+                    rows="4"
+                    value={formData.supplier_requirements}
+                    onChange={(e) => setFormData({ ...formData, supplier_requirements: e.target.value })}
+                    placeholder="Enter specific requirements for suppliers (e.g., certifications, experience, etc.)"
                     className="w-full px-4 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
