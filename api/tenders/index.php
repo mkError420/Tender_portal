@@ -63,9 +63,7 @@ try {
     $stmt->execute($params);
     $tenders = $stmt->fetchAll();
 
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'rcmctender.free.je';
-    $baseUrl = $protocol . '://' . $host;
+    $baseUrl = '';
 
     foreach ($tenders as &$tender) {
         $docStmt = $db->prepare("SELECT id, file_name, file_url, file_size, uploaded_at FROM tender_documents WHERE tender_id = :tender_id");
@@ -74,7 +72,14 @@ try {
 
         foreach ($documents as &$document) {
             if (!preg_match('/^https?:\/\//', $document['file_url'])) {
-                $document['file_url'] = $baseUrl . '/' . ltrim($document['file_url'], '/');
+                $path = ltrim($document['file_url'], '/');
+                if (preg_match('/^uploads\//', $path)) {
+                    $document['file_url'] = $baseUrl . '/api/' . $path;
+                } elseif (preg_match('/^api\//', $path)) {
+                    $document['file_url'] = $baseUrl . '/' . $path;
+                } else {
+                    $document['file_url'] = $baseUrl . '/' . $path;
+                }
             }
         }
 

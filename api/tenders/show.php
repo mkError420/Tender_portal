@@ -43,9 +43,7 @@ try {
     $docStmt->execute([':id' => $id]);
     $documents = $docStmt->fetchAll();
 
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'rcmctender.free.je';
-    $baseUrl = $protocol . '://' . $host;
+    $baseUrl = '';
 
     foreach ($documents as &$document) {
         if (!preg_match('/^https?:\/\//', $document['file_url'])) {

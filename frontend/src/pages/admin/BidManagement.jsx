@@ -35,9 +35,9 @@ const BidManagement = () => {
       const sortedBids = fetchedBids.slice().sort((a, b) => {
         const amountA = parseFloat(a.bid_amount) || 0;
         const amountB = parseFloat(b.bid_amount) || 0;
-        return amountB - amountA;
+        return amountA - amountB;
       });
-      
+
       setBids(sortedBids);
     } catch (error) {
       console.error('Error fetching bids:', error);
@@ -202,113 +202,137 @@ const BidManagement = () => {
             <p className="text-gray-600">Bids will appear here once vendors submit proposals.</p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-300 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-100 border-b border-gray-300">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Vendor
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Company
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Tender
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Bid Amount (BDT) ↓
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Submitted
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-300">
-                  {filteredBids.map((bid, index) => (
-                    <tr key={bid.id} className="hover:bg-gray-100">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-green-600 flex items-center justify-center text-white font-semibold mr-3">
-                            {bid.vendor_name?.charAt(0).toUpperCase() || 'V'}
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{bid.vendor_name}</div>
-                            <div className="text-sm text-gray-500">{bid.vendor_email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{bid.company_name || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{bid.tender_title}</div>
-                        <div className="text-sm text-gray-500">{bid.reference_no}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="text-sm font-semibold text-gray-900">
-                            BDT {Number(bid.bid_amount).toLocaleString('en-US')}
-                          </div>
-                          {index === 0 && (
-                            <span className="ml-2 text-xs font-semibold px-2 py-1 bg-amber-100 text-amber-700 border border-amber-300">
-                              Highest
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <select
-                          value={bid.status}
-                          onChange={(e) => handleStatusUpdate(bid.id, e.target.value)}
-                          className={`text-xs font-semibold px-3 py-1.5 border cursor-pointer ${getStatusColor(bid.status)}`}
-                        >
-                          <option value="submitted">Submitted</option>
-                          <option value="shortlisted">Shortlisted</option>
-                          <option value="accepted">Accepted</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {new Date(bid.submitted_at).toLocaleDateString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleViewDetails(bid)}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs"
-                          >
-                            View Details
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleViewAttachmentsList(bid)}
-                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium text-xs"
-                          >
-                            Attachments
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteClick(bid)}
-                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="space-y-6">
+            {Object.entries(
+              filteredBids.reduce((groups, bid) => {
+                const key = bid.tender_id || bid.tender_title;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(bid);
+                return groups;
+              }, {})
+            ).map(([tenderKey, tenderBids]) => {
+              const sortedTenderBids = [...tenderBids].sort((a, b) => {
+                const amountA = parseFloat(a.bid_amount) || 0;
+                const amountB = parseFloat(b.bid_amount) || 0;
+                return amountA - amountB;
+              });
+
+              return (
+                <div key={tenderKey} className="bg-white border border-gray-300 overflow-hidden">
+                  <div className="bg-gray-50 border-b border-gray-300 px-6 py-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{sortedTenderBids[0]?.tender_title}</h3>
+                        <p className="text-sm text-gray-500">{sortedTenderBids[0]?.reference_no}</p>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {sortedTenderBids.length} submitted bid{sortedTenderBids.length !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-100 border-b border-gray-300">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Vendor
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Company
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Bid Amount (BDT) ↑
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Submitted
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-300">
+                        {sortedTenderBids.map((bid, index) => (
+                          <tr key={bid.id} className="hover:bg-gray-100">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-10 h-10 bg-green-600 flex items-center justify-center text-white font-semibold mr-3">
+                                  {bid.vendor_name?.charAt(0).toUpperCase() || 'V'}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{bid.vendor_name}</div>
+                                  <div className="text-sm text-gray-500">{bid.vendor_email}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{bid.company_name || 'N/A'}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="text-sm font-semibold text-gray-900">
+                                  BDT {Number(bid.bid_amount).toLocaleString('en-US')}
+                                </div>
+                                {index === 0 && (
+                                  <span className="ml-2 text-xs font-semibold px-2 py-1 bg-amber-100 text-amber-700 border border-amber-300">
+                                    Lowest
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <select
+                                value={bid.status}
+                                onChange={(e) => handleStatusUpdate(bid.id, e.target.value)}
+                                className={`text-xs font-semibold px-3 py-1.5 border cursor-pointer ${getStatusColor(bid.status)}`}
+                              >
+                                <option value="submitted">Submitted</option>
+                                <option value="shortlisted">Shortlisted</option>
+                                <option value="accepted">Accepted</option>
+                                <option value="rejected">Rejected</option>
+                              </select>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-600">
+                                {new Date(bid.submitted_at).toLocaleDateString()}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleViewDetails(bid)}
+                                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs"
+                                >
+                                  View Details
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleViewAttachmentsList(bid)}
+                                  className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium text-xs"
+                                >
+                                  Attachments
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteClick(bid)}
+                                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-medium text-xs"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 

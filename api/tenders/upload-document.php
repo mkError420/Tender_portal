@@ -46,6 +46,8 @@ if (isset($_FILES['file'])) {
     $filesInput = $_FILES['file'];
 } elseif (isset($_FILES['file[]'])) {
     $filesInput = $_FILES['file[]'];
+} elseif (isset($_FILES['files'])) {
+    $filesInput = $_FILES['files'];
 }
 
 if ($filesInput === null || !isset($filesInput['name']) || (is_array($filesInput['name']) && empty($filesInput['name'][0])) || (!is_array($filesInput['name']) && empty($filesInput['name']))) {
@@ -92,9 +94,7 @@ if (!is_writable($uploadBaseDir)) {
 // -----------------------------------------------------------------------
 // Phase 3 – Build public URL base
 // -----------------------------------------------------------------------
-$protocol      = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host          = $_SERVER['HTTP_HOST'] ?? 'rcmctender.free.je';
-$uploadBaseUrl = $protocol . '://' . $host . '/api/uploads/tenders/' . $tenderId;
+$uploadBaseUrl = '/api/uploads/tenders/' . $tenderId;
 
 // -----------------------------------------------------------------------
 // Phase 4 – Allowed types (extension-based fallback if finfo unavailable)

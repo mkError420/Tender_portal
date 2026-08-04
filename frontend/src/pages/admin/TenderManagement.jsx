@@ -153,19 +153,15 @@ const TenderManagement = () => {
       // Upload files if any
       if (files.length > 0 && tenderId) {
         const formData = new FormData();
-        files.forEach(file => {
-          formData.append('file', file);
+        files.forEach((file) => {
+          formData.append('file[]', file);
         });
-        formData.append('tender_id', tenderId);
-        
+        formData.append('tender_id', String(tenderId));
+
         try {
-          console.log('Uploading documents for tender ID:', tenderId);
-          console.log('Files to upload:', files.map(f => f.name));
-          const uploadResponse = await tenderService.uploadDocument(formData);
-          console.log('Upload response:', uploadResponse);
+          await tenderService.uploadDocument(formData);
         } catch (uploadError) {
           console.error('Error uploading documents:', uploadError);
-          console.error('Upload error response:', uploadError.response?.data);
           const uploadErrorMessage = uploadError.response?.data?.error || uploadError.message || 'Unknown error';
           alert(`Tender saved but document upload failed: ${uploadErrorMessage}. Please try uploading documents again.`);
         }

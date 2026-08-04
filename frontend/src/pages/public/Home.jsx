@@ -293,18 +293,25 @@ const Home = () => {
                     <div className="rounded-2xl bg-gray-50 p-5">
                       <h5 className="text-lg font-semibold text-primary mb-3">Attachments</h5>
                       <ul className="space-y-2">
-                        {selectedTender.documents.map((document, index) => (
-                          <li key={`${document}-${index}`}>
-                            <a
-                              href={document}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-accent hover:text-accent-dark underline"
-                            >
-                              Document {index + 1}
-                            </a>
-                          </li>
-                        ))}
+                        {selectedTender.documents.map((document, index) => {
+                          const fileUrl = typeof document === 'string' ? document : document.file_url || document.url;
+                          const fileName = typeof document === 'string'
+                            ? `Document ${index + 1}`
+                            : (document.file_name || `Document ${index + 1}`);
+
+                          return (
+                            <li key={`${fileName}-${index}`}>
+                              <a
+                                href={fileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-accent hover:text-accent-dark underline"
+                              >
+                                {fileName}
+                              </a>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   )}

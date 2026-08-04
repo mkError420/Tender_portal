@@ -55,6 +55,20 @@ if (empty($path)) {
 // Simple routing - just include the file if it exists
 $filePath = __DIR__ . '/' . $path;
 
+if (preg_match('#^uploads/#', $path)) {
+    $publicFile = __DIR__ . '/../' . $path;
+    if (file_exists($publicFile) && is_file($publicFile)) {
+        $mime = mime_content_type($publicFile);
+        if (!$mime) {
+            $mime = 'application/octet-stream';
+        }
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . filesize($publicFile));
+        readfile($publicFile);
+        exit;
+    }
+}
+
 if (file_exists($filePath) && is_file($filePath)) {
     include $filePath;
 } else {

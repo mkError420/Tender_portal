@@ -65,7 +65,7 @@ const Navbar = () => {
                     to="/vendor/dashboard"
                     className="bg-primary-light hover:bg-primary text-white font-medium px-3.5 py-1.5 rounded-lg border border-gray-600 transition flex items-center gap-2 text-sm shadow-sm"
                   >
-                    <span>👤</span> {user?.name || 'Vendor'}
+                  {user?.name || 'Vendor'}
                   </Link>
                 ) : (
                   <span className="text-gray-300 text-sm hidden sm:block">
