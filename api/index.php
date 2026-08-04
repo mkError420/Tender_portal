@@ -46,7 +46,9 @@ if (empty($path)) {
             "GET /api/tenders/show.php" => "Get specific tender",
             "POST /api/tenders/create.php" => "Create new tender",
             "POST /api/bids/submit.php" => "Submit bid",
-            "GET /api/admin/dashboard-stats.php" => "Admin dashboard statistics"
+            "GET /api/admin/dashboard-stats.php" => "Admin dashboard statistics",
+            "GET /api/settings/get.php" => "Get website settings",
+            "POST /api/settings/update.php" => "Update website settings"
         ]
     ]);
     exit;

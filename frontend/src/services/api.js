@@ -46,7 +46,10 @@ export const getFileUrl = (url) => {
     if (trimmedUrl.startsWith('//')) {
       return `${window.location.protocol}${trimmedUrl}`;
     }
-    return new URL(trimmedUrl, `${API_BASE_ORIGIN}/`).toString();
+    // Use API_BASE_URL (includes /api) as base so relative paths like
+    // "uploads/documents/file.pdf" resolve to "/api/uploads/documents/file.pdf"
+    const base = API_BASE_URL.endsWith('/') ? API_BASE_URL : `${API_BASE_URL}/`;
+    return new URL(trimmedUrl, base).toString();
   } catch (e) {
     console.warn('Unable to normalize attachment URL:', url, e);
     return '#';

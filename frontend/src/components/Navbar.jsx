@@ -1,9 +1,12 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
+import { getFileUrl } from '../services/api';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, isAdmin, isVendor } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -17,9 +20,13 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="text-gold font-bold text-2xl">RG</div>
+              {settings?.logo_url ? (
+                <img src={getFileUrl(settings.logo_url)} alt="Logo" className="h-8 w-8 object-contain" />
+              ) : (
+                <div className="text-gold font-bold text-2xl">RG</div>
+              )}
               <div className="text-white">
-                <div className="font-semibold text-lg">Rangpur Group</div>
+                <div className="font-semibold text-lg">{settings?.website_name || 'Rangpur Group'}</div>
                 <div className="text-xs text-gray-300">Tender Portal</div>
               </div>
             </Link>

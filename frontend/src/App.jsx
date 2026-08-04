@@ -21,6 +21,7 @@ import TenderManagement from './pages/admin/TenderManagement';
 import BidManagement from './pages/admin/BidManagement';
 import VendorManagement from './pages/admin/VendorManagement';
 import AdminManagement from './pages/admin/AdminManagement';
+import SettingsManagement from './pages/admin/SettingsManagement';
 
 import AdminLayout from './components/AdminLayout';
 
@@ -80,6 +81,7 @@ function App() {
                 <Route path="bids" element={<BidManagement />} />
                 <Route path="vendors" element={<VendorManagement />} />
                 <Route path="admins" element={<AdminManagement />} />
+                <Route path="settings" element={<SettingsManagement />} />
               </Route>
               
               {/* Catch all */}

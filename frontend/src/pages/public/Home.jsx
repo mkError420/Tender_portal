@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { tenderService } from '../../services/tenderService';
 import { CATEGORY_UPDATED_EVENT, loadStoredCategories, mergeCategories } from '../../utils/categories';
 import { getFileUrl } from '../../services/api';
+import { useSettings } from '../../context/SettingsContext';
 
 const Home = () => {
   const [tenders, setTenders] = useState([]);
@@ -15,6 +16,7 @@ const Home = () => {
     category: ''
   });
   const [categoryOptions, setCategoryOptions] = useState(() => loadStoredCategories());
+  const { settings } = useSettings();
 
   const navigate = useNavigate();
 
@@ -102,7 +104,7 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Welcome to Rangpur Group
+              Welcome to {settings?.website_name || 'Rangpur Group'}
             </h1>
             <p className="text-xl text-gray-300 mb-8">
               Find your perfect tender opportunity
@@ -352,11 +354,9 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-4">About Rangpur Group</h2>
-              <p className="text-gray-300 mb-6">
-                Rangpur Group is a leading organization committed to transparency and efficiency 
-                in procurement processes. Our tender management portal provides a secure and 
-                user-friendly platform for vendors to participate in our procurement opportunities.
+              <h2 className="text-3xl font-bold mb-4">About {settings?.website_name || 'Rangpur Group'}</h2>
+              <p className="text-gray-300 mb-6 whitespace-pre-line">
+                {settings?.about_text || 'Rangpur Group is a leading organization committed to transparency and efficiency in procurement processes. Our tender management portal provides a secure and user-friendly platform for vendors to participate in our procurement opportunities.'}
               </p>
               <ul className="space-y-3">
                 <li className="flex items-center">
@@ -379,19 +379,19 @@ const Home = () => {
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div className="bg-primary-light p-6 rounded-lg text-center">
-                <div className="text-4xl font-bold text-gold mb-2">500+</div>
+                <div className="text-4xl font-bold text-gold mb-2">{settings?.projects_count || '500+'}</div>
                 <div className="text-gray-300">Completed Projects</div>
               </div>
               <div className="bg-primary-light p-6 rounded-lg text-center">
-                <div className="text-4xl font-bold text-gold mb-2">200+</div>
+                <div className="text-4xl font-bold text-gold mb-2">{settings?.vendors_count || '200+'}</div>
                 <div className="text-gray-300">Registered Vendors</div>
               </div>
               <div className="bg-primary-light p-6 rounded-lg text-center">
-                <div className="text-4xl font-bold text-gold mb-2">15+</div>
+                <div className="text-4xl font-bold text-gold mb-2">{settings?.experience_years || '15+'}</div>
                 <div className="text-gray-300">Years Experience</div>
               </div>
               <div className="bg-primary-light p-6 rounded-lg text-center">
-                <div className="text-4xl font-bold text-gold mb-2">98%</div>
+                <div className="text-4xl font-bold text-gold mb-2">{settings?.client_satisfaction || '98%'}</div>
                 <div className="text-gray-300">Client Satisfaction</div>
               </div>
             </div>

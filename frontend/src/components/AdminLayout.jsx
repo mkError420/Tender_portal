@@ -13,6 +13,7 @@ const AdminLayout = () => {
     { name: 'Bids', path: '/admin/bids' },
     { name: 'Vendors', path: '/admin/vendors' },
     { name: 'Admins', path: '/admin/admins' },
+    { name: 'Settings', path: '/admin/settings' },
   ];
 
   const handleLogout = () => {

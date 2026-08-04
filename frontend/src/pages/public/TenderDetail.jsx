@@ -141,28 +141,28 @@ const TenderDetail = () => {
   const isClosed = new Date(tender.closing_date) <= new Date();
 
   return (
-    <div className="py-8">
+    <div className="py-4 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Link to="/tenders" className="text-accent hover:text-accent-dark mb-6 inline-block">
+        <Link to="/tenders" className="text-accent hover:text-accent-dark mb-4 sm:mb-6 inline-block text-sm sm:text-base">
           ← Back to Tenders
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className={`text-sm px-4 py-2 rounded-full ${getStatusColor(tender.status)}`}>
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
+                <span className={`text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full ${getStatusColor(tender.status)}`}>
                   {tender.status.replace('_', ' ').toUpperCase()}
                 </span>
-                <span className="text-gray-500 text-sm">
-                  Reference: {tender.reference_no}
+                <span className="text-gray-500 text-xs sm:text-sm">
+                  Ref: {tender.reference_no}
                 </span>
               </div>
               
-              <h1 className="text-3xl font-bold text-primary mb-4">{tender.title}</h1>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary mb-4 break-words">{tender.title}</h1>
               
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="text-sm text-gray-500 mb-1">Category</div>
                   <div className="font-semibold text-primary">{tender.category}</div>
@@ -182,9 +182,9 @@ const TenderDetail = () => {
               </div>
 
               {tender.estimated_budget && (
-                <div className="bg-primary-light p-4 rounded-lg mb-6">
-                  <div className="text-sm text-gray-300 mb-1">Estimated Budget</div>
-                  <div className="text-2xl font-bold text-gold">
+                <div className="bg-primary-light p-3 sm:p-4 rounded-lg mb-6">
+                  <div className="text-xs sm:text-sm text-gray-300 mb-1">Estimated Budget</div>
+                  <div className="text-lg sm:text-2xl font-bold text-gold">
                     BDT {Number(tender.estimated_budget).toLocaleString('en-US')}
                   </div>
                 </div>
@@ -212,14 +212,18 @@ const TenderDetail = () => {
                         href={getFileUrl(doc.file_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                        className="flex items-center justify-between gap-3 p-3 sm:p-4 bg-gray-50 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition border border-gray-200 min-h-[52px]"
                       >
-                        <div>
-                          <div className="font-medium text-primary">{doc.file_name}</div>
-                          <div className="text-sm text-gray-500">
-                            Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-blue-500 text-lg flex-shrink-0">📄</span>
+                          <div className="min-w-0">
+                            <div className="font-medium text-primary text-sm sm:text-base break-all">{doc.file_name}</div>
+                            <div className="text-xs text-gray-500">
+                              Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}
+                            </div>
                           </div>
                         </div>
+                        <span className="text-accent text-xs sm:text-sm font-medium flex-shrink-0">Open ↗</span>
                       </a>
                     ))}
                   </div>
@@ -230,7 +234,7 @@ const TenderDetail = () => {
 
           {/* Sidebar */}
           <div>
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-8">
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:sticky lg:top-8">
               <h2 className="text-xl font-semibold text-primary mb-4">Quick Actions</h2>
               
               <div className="space-y-3">
@@ -293,7 +297,7 @@ const TenderDetail = () => {
 
             {/* Bid Form */}
             {showBidForm && !hasSubmittedBid && (
-              <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mt-6">
                 <h3 className="text-lg font-semibold text-primary mb-4">Submit Your Bid</h3>
                 <form onSubmit={handleBidSubmit}>
                   <div className="mb-4">
@@ -335,7 +339,7 @@ const TenderDetail = () => {
                       accept=".pdf,.doc,.docx,.zip"
                       multiple
                       onChange={handleBidFileChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full text-sm px-2 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                     <p className="text-xs text-gray-500 mt-1">You can upload multiple files at once</p>
                     
@@ -343,10 +347,10 @@ const TenderDetail = () => {
                       <div className="mt-4 space-y-2">
                         <h4 className="text-sm font-medium text-gray-700">Selected Files:</h4>
                         {bidFiles.map((file, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-300 rounded-lg">
-                            <div className="flex items-center">
-                              <span className="text-sm text-gray-900">{file.name}</span>
-                              <span className="text-xs text-gray-500 ml-2">({(file.size / 1024).toFixed(2)} KB)</span>
+                          <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                            <div className="flex flex-wrap items-center min-w-0">
+                              <span className="text-sm text-gray-900 break-all">{file.name}</span>
+                              <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">({(file.size / 1024).toFixed(2)} KB)</span>
                             </div>
                             <button
                               type="button"
