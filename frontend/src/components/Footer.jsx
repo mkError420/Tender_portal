@@ -40,9 +40,9 @@ const Footer = () => {
           <div>
             <h3 className="text-white font-semibold mb-4">Contact</h3>
             <ul className="space-y-2 text-sm">
-              <li>Email: info@rangpurgroup.com</li>
-              <li>Phone: +880 1700-000000</li>
-              <li>Dhaka, Bangladesh</li>
+              <li>Email: elearning.rcnc@gmail.com</li>
+              <li>Phone: +880 17**-******</li>
+              <li>Rangpur, Bangladesh</li>
             </ul>
           </div>
         </div>

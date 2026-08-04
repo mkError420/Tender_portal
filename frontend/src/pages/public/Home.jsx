@@ -104,7 +104,7 @@ const Home = () => {
               Welcome to Rangpur Group
             </h1>
             <p className="text-xl text-gray-300 mb-8">
-              Your Trusted Tender Management Portal
+              Find your perfect tender opportunity
             </p>
             <div className="flex justify-center space-x-4">
               <Link
@@ -159,7 +159,10 @@ const Home = () => {
       {/* Latest Tenders */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-primary mb-8">Latest Active Tenders</h2>
+          <h2 className="text-3xl font-bold text-yellow-500 mb-8 flex items-center">
+            <span>Latest Active Tenders</span>
+            <span className="ml-2 text-accent">({tenders.length})</span>
+          </h2>
           
           {loading ? (
             <div className="text-center py-8">

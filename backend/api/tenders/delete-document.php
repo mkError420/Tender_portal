@@ -36,7 +36,7 @@ try {
     }
     
     // Delete the physical file
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($document['file_url'], '/');
+    $filePath = UPLOAD_DIR . 'tenders/' . $document['tender_id'] . '/' . basename($document['file_url']);
     if (file_exists($filePath)) {
         unlink($filePath);
     }

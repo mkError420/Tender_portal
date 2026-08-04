@@ -36,13 +36,13 @@ try {
         sendJsonResponse(['error' => 'Tender not found with ID: ' . $tenderId], 404);
     }
     
-    // Check if upload directory exists and is writable
-    if (!is_dir(UPLOAD_DIR)) {
-        sendJsonResponse(['error' => 'Upload directory does not exist'], 500);
-    }
+    $tenderUploadDir = UPLOAD_DIR . 'tenders/' . $tenderId . '/';
     
-    if (!is_writable(UPLOAD_DIR)) {
-        sendJsonResponse(['error' => 'Upload directory is not writable'], 500);
+    // Check if upload directory exists and is writable
+    if (!is_dir($tenderUploadDir)) {
+        if (!mkdir($tenderUploadDir, 0777, true)) {
+            sendJsonResponse(['error' => 'Failed to create upload directory'], 500);
+        }
     }
     
     // Reorganize files array for multiple uploads
@@ -94,7 +94,7 @@ try {
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
         $baseName = pathinfo($file['name'], PATHINFO_FILENAME);
         $safeFileName = sanitizeFileName($baseName) . '_' . $timestamp . '.' . $extension;
-        $uploadPath = UPLOAD_DIR . $safeFileName;
+        $uploadPath = $tenderUploadDir . $safeFileName;
         
         // Move uploaded file
         if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
@@ -103,7 +103,7 @@ try {
         }
         
         // Store in database
-        $fileUrl = '/uploads/' . $safeFileName;
+        $fileUrl = '/uploads/tenders/' . $tenderId . '/' . $safeFileName;
         $query = "INSERT INTO tender_documents (tender_id, file_name, file_url, file_size) 
                   VALUES (:tender_id, :file_name, :file_url, :file_size)";
         
